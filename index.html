@@ -1,1857 +1,1771 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stormaway Operations Dashboard - BC Ferries Route 13</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        /* Reset and Base */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        :root {
-            --primary-blue: #0055a5;  /* BC Ferries blue */
-            --secondary-blue: #1a73e8;
-            --accent-gold: #ffc72c;   /* BC Ferries gold */
-            --accent-green: #10b981;  /* Ferry schedule green */
-            --accent-red: #e74c3c;    /* Warning/Alert */
-            --light-blue: #e8f4ff;
-            --dark-blue: #003f7d;
-            --text-dark: #202124;
-            --text-light: #ffffff;
-            --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            --border-radius: 12px;
-            --transition: all 0.3s ease;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #f0f7ff 0%, #e0f0ff 100%);
-            color: var(--text-dark);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        /* Main Container */
-        .dashboard-container {
-            max-width: 1800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: var(--border-radius);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
-            overflow: hidden;
-        }
-        
-        /* Enhanced Header */
-        .dashboard-header {
-            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
-            color: var(--text-light);
-            padding: 25px 40px 20px;
-            position: relative;
-            border-bottom: 6px solid var(--accent-gold);
-        }
-        
-        .header-gradient-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(90deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
-            pointer-events: none;
-        }
-        
-        .header-main {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            position: relative;
-            z-index: 2;
-        }
-        
-        .header-title-section {
-            flex: 1;
-        }
-        
-        h1.dashboard-title {
-            font-size: 2.6rem;
-            font-weight: 800;
-            margin: 0 0 5px 0;
-            letter-spacing: -0.5px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .title-icon {
-            font-size: 2.2rem;
-            background: rgba(255, 255, 255, 0.2);
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 3px solid var(--accent-gold);
-        }
-        
-        .dashboard-subtitle {
-            font-size: 1.15rem;
-            opacity: 0.95;
-            max-width: 800px;
-            line-height: 1.5;
-            font-weight: 400;
-        }
-        
-        .header-route-badge {
-            background: var(--accent-gold);
-            color: var(--dark-blue);
-            padding: 8px 20px;
-            border-radius: 30px;
-            font-weight: 700;
-            font-size: 1.1rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 10px;
-            box-shadow: 0 4px 10px rgba(255, 199, 44, 0.3);
-        }
-        
-        .header-weather-summary {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            padding: 15px 20px;
-            max-width: 300px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .weather-summary-title {
-            font-size: 0.9rem;
-            opacity: 0.9;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .weather-summary-item {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.95rem;
-            margin-bottom: 5px;
-        }
-        
-        /* Quick Stats Bar */
-        .quick-stats-bar {
-            background: rgba(0, 0, 0, 0.2);
-            padding: 12px 40px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            position: relative;
-            z-index: 2;
-        }
-        
-        .stat-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        
-        .stat-icon {
-            font-size: 1.5rem;
-            opacity: 0.9;
-        }
-        
-        .stat-content h4 {
-            font-size: 0.9rem;
-            opacity: 0.9;
-            margin-bottom: 3px;
-            font-weight: 500;
-        }
-        
-        .stat-content p {
-            font-size: 1.1rem;
-            font-weight: 700;
-        }
-        
-        /* Status Bar */
-        .status-bar {
-            background: #0b3366;
-            color: white;
-            padding: 12px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-        
-        .last-updated {
-            font-weight: 600;
-            font-size: 0.95rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .live-indicator {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 0.9rem;
-            color: #a8d5ff;
-        }
-        
-        .live-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background-color: #2ecc71;
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.05); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-        
-        /* Marine Conditions Section */
-        .marine-conditions-section {
-            background: #f8fafc;
-            padding: 25px 40px 10px;
-            border-bottom: 2px solid #e2e8f0;
-        }
-        
-        .section-title-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        
-        .section-title {
-            color: var(--dark-blue);
-            font-size: 1.6rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        
-        .section-subtitle {
-            color: #64748b;
-            font-size: 1rem;
-            margin-top: 5px;
-            max-width: 800px;
-        }
-        
-        /* Wind Thresholds Info */
-        .wind-thresholds {
-            background: white;
-            border-radius: 10px;
-            padding: 15px 20px;
-            margin: 15px 0 25px;
-            border-left: 5px solid var(--primary-blue);
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-        }
-        
-        .thresholds-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-            color: var(--dark-blue);
-            font-weight: 600;
-        }
-        
-        .thresholds-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 10px;
-        }
-        
-        .threshold-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px 12px;
-            background: #f1f8ff;
-            border-radius: 8px;
-        }
-        
-        .threshold-indicator {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-        }
-        
-        .threshold-indicator.safe { background: #2ecc71; }
-        .threshold-indicator.caution { background: #f39c12; }
-        .threshold-indicator.danger { background: #e74c3c; }
-        
-        /* Controls */
-        .controls-section {
-            background: var(--light-blue);
-            padding: 15px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-        
-        .controls-title {
-            font-weight: 700;
-            color: var(--dark-blue);
-            font-size: 1.1rem;
-        }
-        
-        .control-buttons {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-        
-        .control-btn {
-            background: white;
-            border: 2px solid var(--secondary-blue);
-            color: var(--secondary-blue);
-            padding: 10px 18px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: var(--transition);
-            font-size: 0.95rem;
-        }
-        
-        .control-btn:hover {
-            background: var(--secondary-blue);
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(26, 115, 232, 0.25);
-        }
-        
-        .control-btn:active {
-            transform: translateY(0);
-        }
-        
-        /* Forecast Grid */
-        .forecast-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
-            gap: 25px;
-            padding: 30px 40px;
-        }
-        
-        @media (min-width: 1800px) {
-            .forecast-grid {
-                grid-template-columns: repeat(4, 1fr);
-            }
-            
-            .forecast-grid.ferry-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-        
-        @media (min-width: 1400px) and (max-width: 1799px) {
-            .forecast-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-            
-            .forecast-grid.ferry-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-        
-        @media (min-width: 1024px) and (max-width: 1399px) {
-            .forecast-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-        
-        @media (max-width: 1023px) {
-            .forecast-grid {
-                grid-template-columns: 1fr;
-                padding: 20px;
-            }
-        }
-        
-        /* Forecast Cards */
-        .forecast-card {
-            background: white;
-            border-radius: var(--border-radius);
-            overflow: hidden;
-            box-shadow: var(--card-shadow);
-            border: 2px solid transparent;
-            transition: var(--transition);
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .forecast-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
-            border-color: var(--secondary-blue);
-        }
-        
-        .card-header {
-            background: linear-gradient(to right, var(--primary-blue), var(--secondary-blue));
-            color: white;
-            padding: 18px 24px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: relative;
-        }
-        
-        .card-header.ferry {
-            background: linear-gradient(to right, #059669, #10b981);
-        }
-        
-        .card-header::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: rgba(255, 255, 255, 0.3);
-        }
-        
-        .location-info {
-            flex: 1;
-        }
-        
-        .location-name {
-            font-size: 1.4rem;
-            font-weight: 800;
-            margin-bottom: 5px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .location-subtitle {
-            font-size: 0.9rem;
-            opacity: 0.9;
-        }
-        
-        .location-distance {
-            font-size: 0.85rem;
-            opacity: 0.8;
-            margin-top: 3px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        
-        .location-icon {
-            font-size: 2rem;
-            color: var(--accent-gold);
-            background: rgba(255, 255, 255, 0.15);
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            margin-left: 15px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-        }
-        
-        .location-icon.ferry {
-            color: white;
-        }
-        
-        .card-content {
-            padding: 0;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .iframe-container {
-            width: 100%;
-            flex: 1;
-            min-height: 480px;
-            border: none;
-        }
-        
-        .ferry-content-container {
-            padding: 35px 30px;
-            text-align: center;
-            height: 320px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: #f8fafc;
-        }
-        
-        .ferry-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            width: 100%;
-            max-width: 320px;
-            margin-top: 20px;
-        }
-        
-        .ferry-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            padding: 14px;
-            font-size: 1.05rem;
-            text-decoration: none;
-            border-radius: 10px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        
-        .ferry-btn-primary {
-            background: var(--accent-green);
-            color: white;
-        }
-        
-        .ferry-btn-secondary {
-            background: var(--primary-blue);
-            color: white;
-        }
-        
-        .ferry-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
-        }
-        
-        .card-footer {
-            padding: 16px 24px;
-            border-top: 1px solid rgba(0, 0, 0, 0.08);
-            background: #f8fafc;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-        
-        .data-source {
-            font-size: 0.9rem;
-            color: #64748b;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .direct-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            background: var(--accent-gold);
-            color: var(--dark-blue);
-            padding: 9px 18px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 700;
-            transition: var(--transition);
-            font-size: 0.9rem;
-        }
-        
-        .direct-link.ferry {
-            background: var(--accent-green);
-            color: white;
-        }
-        
-        .direct-link:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 12px rgba(255, 199, 44, 0.3);
-        }
-        
-        /* Loading States */
-        .loading-placeholder {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 480px;
-            background: #f8fafc;
-            color: var(--text-dark);
-            gap: 20px;
-            padding: 0 30px;
-            text-align: center;
-        }
-        
-        .loading-spinner {
-            border: 5px solid rgba(0, 85, 165, 0.1);
-            border-top: 5px solid var(--primary-blue);
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        /* Quick Info Panel */
-        .quick-info-panel {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 25px;
-            margin: 25px 40px 0;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-            border: 1px solid #e2e8f0;
-        }
-        
-        .info-panel-title {
-            color: var(--dark-blue);
-            font-size: 1.3rem;
-            font-weight: 700;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid #f0f4f8;
-        }
-        
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-        }
-        
-        .info-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 15px;
-            padding: 15px;
-            background: #f8fafc;
-            border-radius: 10px;
-            border-left: 4px solid var(--primary-blue);
-        }
-        
-        .info-item.safety {
-            border-left-color: var(--accent-red);
-        }
-        
-        .info-item.operations {
-            border-left-color: var(--accent-green);
-        }
-        
-        .info-item.wind {
-            border-left-color: var(--secondary-blue);
-        }
-        
-        .info-icon {
-            font-size: 1.5rem;
-            color: var(--primary-blue);
-            margin-top: 3px;
-        }
-        
-        .info-content h4 {
-            font-size: 1rem;
-            color: var(--dark-blue);
-            margin-bottom: 8px;
-            font-weight: 700;
-        }
-        
-        .info-content p {
-            font-size: 0.9rem;
-            color: #64748b;
-            line-height: 1.5;
-        }
-        
-        /* Footer */
-        .dashboard-footer {
-            background: var(--dark-blue);
-            color: white;
-            padding: 30px 40px;
-        }
-        
-        .footer-content {
-            max-width: 900px;
-            margin: 0 auto;
-        }
-        
-        .footer-links {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 25px;
-            margin: 25px 0;
-            padding: 25px 0;
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .footer-link {
-            color: var(--accent-gold);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: var(--transition);
-            font-size: 0.95rem;
-            font-weight: 600;
-        }
-        
-        .footer-link:hover {
-            color: white;
-            text-decoration: underline;
-        }
-        
-        .disclaimer {
-            margin-top: 25px;
-            padding-top: 25px;
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-            font-size: 0.85rem;
-            opacity: 0.85;
-            line-height: 1.6;
-            text-align: center;
-        }
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-            
-            .dashboard-header {
-                padding: 20px;
-            }
-            
-            .header-main {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 20px;
-            }
-            
-            h1.dashboard-title {
-                font-size: 2rem;
-            }
-            
-            .title-icon {
-                width: 60px;
-                height: 60px;
-                font-size: 1.8rem;
-            }
-            
-            .dashboard-subtitle {
-                font-size: 1rem;
-            }
-            
-            .header-weather-summary {
-                max-width: 100%;
-            }
-            
-            .status-bar {
-                padding: 10px 20px;
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            
-            .controls-section {
-                padding: 12px 20px;
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .control-buttons {
-                justify-content: center;
-            }
-            
-            .forecast-grid {
-                padding: 20px;
-                gap: 20px;
-            }
-            
-            .card-header {
-                padding: 14px 18px;
-            }
-            
-            .iframe-container {
-                min-height: 400px;
-            }
-            
-            .ferry-content-container {
-                height: 280px;
-                padding: 25px 20px;
-            }
-            
-            .marine-conditions-section {
-                padding: 20px 20px 10px;
-            }
-            
-            .quick-info-panel {
-                margin: 20px 20px 0;
-                padding: 20px;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            h1.dashboard-title {
-                font-size: 1.8rem;
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-            
-            .title-icon {
-                align-self: flex-start;
-            }
-            
-            .card-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 15px;
-            }
-            
-            .location-icon {
-                margin-left: 0;
-                align-self: flex-start;
-            }
-            
-            .card-footer {
-                flex-direction: column;
-                align-items: stretch;
-                text-align: center;
-            }
-            
-            .section-title {
-                font-size: 1.4rem;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stormaway Operations Dashboard - BC Ferries Route 13</title>
+  <meta name="description" content="Marine operations dashboard for BC Ferries Route 13 (Stormaway) with wind station panels, ferry links, and panel refresh monitoring." />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ===== CSS RESET & BASE ===== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --primary-blue: #0055a5;
+      --secondary-blue: #1a73e8;
+      --accent-gold: #ffc72c;
+      --accent-green: #10b981;
+      --accent-red: #e74c3c;
+      --light-blue: #e8f4ff;
+      --dark-blue: #003f7d;
+      --text-dark: #202124;
+      --text-light: #ffffff;
+      --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      --border-radius: 12px;
+      --transition: all 0.3s ease;
+
+      --row-alt-light: #f8fafc;
+      --row-alt-dark: #f0f4f8;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #f0f7ff 0%, #e0f0ff 100%);
+      color: var(--text-dark);
+      min-height: 100vh;
+      padding: 20px;
+      line-height: 1.5;
+    }
+
+    .dashboard-container {
+      max-width: 1800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: var(--border-radius);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+      overflow: hidden;
+    }
+
+    /* ===== HEADER ===== */
+    .dashboard-header {
+      background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+      color: var(--text-light);
+      padding: 25px 40px 20px;
+      position: relative;
+      border-bottom: 6px solid var(--accent-gold);
+    }
+
+    .header-gradient-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+      pointer-events: none;
+    }
+
+    .header-main {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      position: relative;
+      z-index: 2;
+      gap: 20px;
+    }
+
+    .header-title-section { flex: 1; }
+
+    h1.dashboard-title {
+      font-size: 2.6rem;
+      font-weight: 800;
+      margin: 0 0 5px 0;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .title-icon {
+      font-size: 2.2rem;
+      background: rgba(255, 255, 255, 0.2);
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 3px solid var(--accent-gold);
+      flex-shrink: 0;
+    }
+
+    .dashboard-subtitle {
+      font-size: 1.15rem;
+      opacity: 0.95;
+      max-width: 900px;
+      line-height: 1.5;
+      font-weight: 400;
+    }
+
+    .header-route-badge {
+      background: var(--accent-gold);
+      color: var(--dark-blue);
+      padding: 8px 20px;
+      border-radius: 30px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+      box-shadow: 0 4px 10px rgba(255, 199, 44, 0.3);
+    }
+
+    .header-weather-summary {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 15px 20px;
+      max-width: 330px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      flex-shrink: 0;
+    }
+
+    .weather-summary-title {
+      font-size: 0.9rem;
+      opacity: 0.9;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .weather-summary-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.95rem;
+      margin-bottom: 5px;
+    }
+
+    /* ===== QUICK STATS BAR ===== */
+    .quick-stats-bar {
+      background: rgba(0, 0, 0, 0.2);
+      padding: 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      border-top: 1px solid rgba(255,255,255,0.1);
+      position: relative;
+      z-index: 2;
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 15px 20px;
+    }
+
+    .stat-item:nth-child(4n+1),
+    .stat-item:nth-child(4n+2) { background: rgba(255, 255, 255, 0.08); }
+
+    .stat-item:nth-child(4n+3),
+    .stat-item:nth-child(4n+4) { background: rgba(255, 255, 255, 0.15); }
+
+    .stat-icon { font-size: 1.5rem; opacity: 0.9; }
+
+    .stat-content h4 {
+      font-size: 0.9rem;
+      opacity: 0.9;
+      margin-bottom: 3px;
+      font-weight: 500;
+    }
+
+    .stat-content p { font-size: 1.1rem; font-weight: 700; }
+
+    /* ===== STATUS BAR ===== */
+    .status-bar {
+      background: #0b3366;
+      color: white;
+      padding: 12px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .last-updated {
+      font-weight: 600;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .live-indicator {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9rem;
+      color: #a8d5ff;
+      flex-wrap: wrap;
+    }
+
+    .live-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: #2ecc71;
+      animation: pulse 2s infinite;
+      flex-shrink: 0;
+    }
+
+    .panel-staleness-warning {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      background: rgba(231, 76, 60, 0.2);
+      padding: 8px 15px;
+      border-radius: 6px;
+      border-left: 4px solid var(--accent-red);
+      margin-top: 5px;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .panel-staleness-warning.show { display: flex; }
+
+    @keyframes pulse {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.05); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* ===== SECTION ===== */
+    .marine-conditions-section {
+      background: #f8fafc;
+      padding: 25px 40px 10px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    .section-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      gap: 20px;
+    }
+
+    .section-title {
+      color: var(--dark-blue);
+      font-size: 1.6rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-subtitle {
+      color: #64748b;
+      font-size: 1rem;
+      margin-top: 5px;
+      max-width: 900px;
+    }
+
+    /* ===== WIND THRESHOLDS ===== */
+    .wind-thresholds {
+      background: white;
+      border-radius: 10px;
+      padding: 15px 0;
+      margin: 15px 0 25px;
+      border-left: 5px solid var(--primary-blue);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+    }
+
+    .thresholds-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      color: var(--dark-blue);
+      font-weight: 600;
+      padding: 0 20px;
+    }
+
+    .thresholds-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1px;
+      margin-top: 10px;
+      background: #e2e8f0;
+    }
+
+    .threshold-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 20px;
+      background: white;
+    }
+
+    .threshold-item:nth-child(odd) { background: var(--row-alt-light); }
+    .threshold-item:nth-child(even) { background: var(--row-alt-dark); }
+
+    .threshold-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .threshold-indicator.safe { background: #2ecc71; }
+    .threshold-indicator.caution { background: #f39c12; }
+    .threshold-indicator.danger { background: #e74c3c; }
+
+    /* ===== CONTROLS ===== */
+    .controls-section {
+      background: var(--light-blue);
+      padding: 15px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    .controls-title {
+      font-weight: 700;
+      color: var(--dark-blue);
+      font-size: 1.1rem;
+    }
+
+    .control-buttons {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .control-btn {
+      background: white;
+      border: 2px solid var(--secondary-blue);
+      color: var(--secondary-blue);
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: var(--transition);
+      font-size: 0.95rem;
+    }
+
+    .control-btn:hover {
+      background: var(--secondary-blue);
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(26, 115, 232, 0.25);
+    }
+
+    .control-btn:active { transform: translateY(0); }
+
+    /* ===== GRID ===== */
+    .forecast-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+      gap: 25px;
+      padding: 30px 40px;
+    }
+
+    @media (min-width: 1800px) {
+      .forecast-grid { grid-template-columns: repeat(4, 1fr); }
+      .forecast-grid.ferry-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (min-width: 1400px) and (max-width: 1799px) {
+      .forecast-grid { grid-template-columns: repeat(3, 1fr); }
+      .forecast-grid.ferry-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (min-width: 1024px) and (max-width: 1399px) {
+      .forecast-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 1023px) {
+      .forecast-grid { grid-template-columns: 1fr; padding: 20px; }
+    }
+
+    /* ===== CARDS ===== */
+    .forecast-card {
+      background: white;
+      border-radius: var(--border-radius);
+      overflow: hidden;
+      box-shadow: var(--card-shadow);
+      border: 2px solid transparent;
+      transition: var(--transition);
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .forecast-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+      border-color: var(--secondary-blue);
+    }
+
+    .card-header {
+      color: white;
+      padding: 18px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      gap: 15px;
+    }
+
+    .forecast-card:nth-child(4n+1) .card-header { background: linear-gradient(to right, #0055a5, #1a6bc1); }
+    .forecast-card:nth-child(4n+2) .card-header { background: linear-gradient(to right, #0a6fc2, #2a7fdd); }
+    .forecast-card:nth-child(4n+3) .card-header { background: linear-gradient(to right, #1a73e8, #3a8bf9); }
+    .forecast-card:nth-child(4n+4) .card-header { background: linear-gradient(to right, #2a7fdd, #4a9bff); }
+
+    .card-header.ferry { background: linear-gradient(to right, #059669, #10b981); }
+
+    .card-header::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .location-info { flex: 1; }
+    .location-name {
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .location-subtitle { font-size: 0.9rem; opacity: 0.9; }
+    .location-distance {
+      font-size: 0.85rem;
+      opacity: 0.8;
+      margin-top: 3px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .location-icon {
+      font-size: 2rem;
+      color: var(--accent-gold);
+      background: rgba(255, 255, 255, 0.15);
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .location-icon.ferry { color: white; }
+
+    .card-content {
+      padding: 0;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #f8fafc;
+    }
+
+    /* Always-visible quick actions inside card body (helps if iframe is blank/blocked) */
+    .card-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 15px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      flex-wrap: wrap;
+    }
+
+    .card-actions .hint {
+      font-size: 0.85rem;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .mini-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-weight: 700;
+      text-decoration: none;
+      font-size: 0.85rem;
+      background: var(--accent-gold);
+      color: var(--dark-blue);
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+
+    .mini-link:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(255, 199, 44, 0.25);
+    }
+
+    .iframe-container {
+      width: 100%;
+      flex: 1;
+      min-height: 480px;
+      border: none;
+      background: white;
+    }
+
+    /* Panel refresh indicator (truthful: it tracks panel refresh time) */
+    .panel-refresh-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 15px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 0.85rem;
+      color: #64748b;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .refresh-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .refresh-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #2ecc71;
+      flex-shrink: 0;
+    }
+
+    .refresh-dot.warning { background-color: #f39c12; animation: pulse 1.5s infinite; }
+    .refresh-dot.stale { background-color: #e74c3c; animation: pulse 1s infinite; }
+
+    /* ===== FERRY CONTENT ===== */
+    .ferry-content-container {
+      padding: 35px 30px;
+      text-align: center;
+      height: 320px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: #f8fafc;
+    }
+
+    .ferry-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      width: 100%;
+      max-width: 320px;
+      margin-top: 20px;
+    }
+
+    .ferry-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 14px;
+      font-size: 1.05rem;
+      text-decoration: none;
+      border-radius: 10px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .ferry-btn-primary { background: var(--accent-green); color: white; }
+    .ferry-btn-secondary { background: var(--primary-blue); color: white; }
+
+    .ferry-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+    }
+
+    /* ===== FOOTERS ===== */
+    .card-footer {
+      padding: 12px 24px;
+      border-top: 1px solid rgba(0, 0, 0, 0.08);
+      background: #f8fafc;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    .forecast-card:nth-child(odd) .card-footer { background: var(--row-alt-light); }
+    .forecast-card:nth-child(even) .card-footer { background: var(--row-alt-dark); }
+
+    .data-source {
+      font-size: 0.9rem;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .direct-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--accent-gold);
+      color: var(--dark-blue);
+      padding: 9px 18px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 700;
+      transition: var(--transition);
+      font-size: 0.9rem;
+    }
+
+    .direct-link.ferry { background: var(--accent-green); color: white; }
+
+    .direct-link:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(255, 199, 44, 0.3);
+    }
+
+    /* ===== LOADING ===== */
+    .loading-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 480px;
+      background: #f8fafc;
+      color: var(--text-dark);
+      gap: 20px;
+      padding: 0 30px;
+      text-align: center;
+    }
+
+    .loading-spinner {
+      border: 5px solid rgba(0, 85, 165, 0.1);
+      border-top: 5px solid var(--primary-blue);
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* ===== QUICK INFO PANEL ===== */
+    .quick-info-panel {
+      background: white;
+      border-radius: var(--border-radius);
+      padding: 20px 0;
+      margin: 25px 40px 0;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+      border: 1px solid #e2e8f0;
+      overflow: hidden;
+    }
+
+    .info-panel-title {
+      color: var(--dark-blue);
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 25px 12px;
+      border-bottom: 2px solid #f0f4f8;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1px;
+      background: #e2e8f0;
+    }
+
+    .info-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 15px;
+      padding: 20px 25px;
+      background: white;
+    }
+
+    .info-item:nth-child(odd) { background: var(--row-alt-light); }
+    .info-item:nth-child(even) { background: var(--row-alt-dark); }
+
+    .info-item.safety { border-left: 4px solid var(--accent-red); }
+    .info-item.operations { border-left: 4px solid var(--accent-green); }
+    .info-item.wind { border-left: 4px solid var(--secondary-blue); }
+
+    .info-icon { font-size: 1.5rem; color: var(--primary-blue); margin-top: 3px; }
+
+    .info-content h4 {
+      font-size: 1rem;
+      color: var(--dark-blue);
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .info-content p {
+      font-size: 0.9rem;
+      color: #64748b;
+      line-height: 1.5;
+    }
+
+    /* ===== FOOTER ===== */
+    .dashboard-footer {
+      background: var(--dark-blue);
+      color: white;
+      padding: 30px 40px;
+    }
+
+    .footer-content { max-width: 1000px; margin: 0 auto; }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 25px;
+      margin: 25px 0;
+      padding: 25px 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .footer-link {
+      color: var(--accent-gold);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: var(--transition);
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .footer-link:hover { color: white; text-decoration: underline; }
+
+    .disclaimer {
+      margin-top: 25px;
+      padding-top: 25px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      font-size: 0.85rem;
+      opacity: 0.88;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      body { padding: 10px; }
+      .dashboard-header { padding: 20px; }
+      .header-main { flex-direction: column; align-items: flex-start; gap: 20px; }
+      h1.dashboard-title { font-size: 2rem; }
+      .title-icon { width: 60px; height: 60px; font-size: 1.8rem; }
+      .dashboard-subtitle { font-size: 1rem; }
+      .header-weather-summary { max-width: 100%; }
+      .status-bar { padding: 10px 20px; flex-direction: column; align-items: flex-start; }
+      .controls-section { padding: 12px 20px; flex-direction: column; align-items: stretch; }
+      .control-buttons { justify-content: center; }
+      .forecast-grid { padding: 20px; gap: 20px; }
+      .card-header { padding: 14px 18px; }
+      .iframe-container { min-height: 400px; }
+      .ferry-content-container { height: 280px; padding: 25px 20px; }
+      .marine-conditions-section { padding: 20px 20px 10px; }
+      .quick-info-panel { margin: 20px 20px 0; padding: 15px 0; }
+      .info-item { padding: 15px 20px; }
+    }
+
+    @media (max-width: 480px) {
+      h1.dashboard-title { font-size: 1.8rem; flex-direction: column; align-items: flex-start; gap: 10px; }
+      .title-icon { align-self: flex-start; }
+      .card-header { flex-direction: column; align-items: flex-start; gap: 15px; }
+      .location-icon { align-self: flex-start; }
+      .card-footer { flex-direction: column; align-items: stretch; text-align: center; }
+      .section-title { font-size: 1.4rem; }
+      .card-actions { justify-content: center; }
+    }
+
+    /* Print: hide buttons */
+    @media print {
+      .controls-section, .control-buttons, .custom-notification, .card-actions { display: none !important; }
+      body { background: white; padding: 0; }
+      .dashboard-container { box-shadow: none; }
+    }
+  </style>
 </head>
+
 <body>
-    <div class="dashboard-container">
-        <!-- Enhanced Header -->
-        <header class="dashboard-header">
-            <div class="header-gradient-overlay"></div>
-            
-            <div class="header-main">
-                <div class="header-title-section">
-                    <h1 class="dashboard-title">
-                        <span class="title-icon">⛴️</span>
-                        Stormaway Operations Dashboard
-                    </h1>
-                    <p class="dashboard-subtitle">
-                        BC Ferries Route 13 • Langdale ↔ Keats Island ↔ Gambier Island • Real-time Marine Intelligence for Safe Operations
-                    </p>
-                    <div class="header-route-badge">
-                        <i class="fas fa-route"></i>
-                        <span>Route 13 • Small Vessel Operations</span>
-                    </div>
-                </div>
-                
-                <div class="header-weather-summary">
-                    <div class="weather-summary-title">
-                        <i class="fas fa-info-circle"></i>
-                        <span>Marine Operations Status</span>
-                    </div>
-                    <div class="weather-summary-item">
-                        <span><i class="fas fa-wind"></i> Wind Monitoring:</span>
-                        <span><strong>4 Stations</strong></span>
-                    </div>
-                    <div class="weather-summary-item">
-                        <span><i class="fas fa-ship"></i> Ferry Connections:</span>
-                        <span><strong>2 Routes</strong></span>
-                    </div>
-                    <div class="weather-summary-item">
-                        <span><i class="fas fa-shield-alt"></i> Safety Level:</span>
-                        <span style="color: #2ecc71;"><strong>Normal</strong></span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Quick Stats Bar -->
-            <div class="quick-stats-bar">
-                <div class="stat-item">
-                    <div class="stat-icon">📏</div>
-                    <div class="stat-content">
-                        <h4>Route Length</h4>
-                        <p>~12 Nautical Miles</p>
-                    </div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-icon">⏱️</div>
-                    <div class="stat-content">
-                        <h4>Avg. Crossing Time</h4>
-                        <p>45-60 Minutes</p>
-                    </div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-icon">👥</div>
-                    <div class="stat-content">
-                        <h4>Max Passengers</h4>
-                        <p>12 Persons</p>
-                    </div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-icon">📞</div>
-                    <div class="stat-content">
-                        <h4>Marine VHF</h4>
-                        <p>Channel 16</p>
-                    </div>
-                </div>
-            </div>
-        </header>
-        
-        <!-- Status Bar -->
-        <div class="status-bar">
-            <div class="last-updated">
-                <i class="fas fa-clock"></i>
-                <span id="currentDateTime">Loading date and time...</span>
-            </div>
-            <div class="live-indicator">
-                <span class="live-dot"></span>
-                <span>Environment Canada & BC Ferries pages in iframes • Designed to refresh every 30 minutes</span>
-            </div>
+  <div class="dashboard-container">
+    <header class="dashboard-header">
+      <div class="header-gradient-overlay"></div>
+
+      <div class="header-main">
+        <div class="header-title-section">
+          <h1 class="dashboard-title">
+            <span class="title-icon">⛴️</span>
+            Stormaway Operations Dashboard
+          </h1>
+          <p class="dashboard-subtitle">
+            BC Ferries Route 13 • Langdale ↔ Keats Island ↔ Gambier Island • Operational awareness panels for safe small-vessel decision making
+          </p>
+          <div class="header-route-badge">
+            <i class="fas fa-route"></i>
+            <span>Route 13 • Small Vessel Operations</span>
+          </div>
         </div>
-        
-        <!-- Marine Conditions Section -->
-        <div class="marine-conditions-section">
-            <div class="section-title-row">
-                <div>
-                    <h2 class="section-title">
-                        <i class="fas fa-wind"></i>
-                        Marine Wind Conditions
-                    </h2>
-                    <div class="section-subtitle">
-                        Real-time wind observations for Route 13 operations. Critical for departure decisions and passenger safety.
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Wind Thresholds Information -->
-            <div class="wind-thresholds">
-                <div class="thresholds-title">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <span>Stormaway Wind Safety Thresholds</span>
-                </div>
-                <div class="thresholds-grid">
-                    <div class="threshold-item">
-                        <div class="threshold-indicator safe"></div>
-                        <div>
-                            <strong>Safe Operations:</strong> &lt; 20 knots
-                        </div>
-                    </div>
-                    <div class="threshold-item">
-                        <div class="threshold-indicator caution"></div>
-                        <div>
-                            <strong>Exercise Caution:</strong> 20–25 knots
-                        </div>
-                    </div>
-                    <div class="threshold-item">
-                        <div class="threshold-indicator danger"></div>
-                        <div>
-                            <strong>Consider Delaying:</strong> &gt; 25 knots
-                        </div>
-                    </div>
-                    <div class="threshold-item">
-                        <div class="threshold-indicator danger"></div>
-                        <div>
-                            <strong>Do Not Sail:</strong> &gt; 30 knots
-                        </div>
-                    </div>
-                </div>
-            </div>
+
+        <div class="header-weather-summary">
+          <div class="weather-summary-title">
+            <i class="fas fa-info-circle"></i>
+            <span>Operations Snapshot</span>
+          </div>
+          <div class="weather-summary-item">
+            <span><i class="fas fa-wind"></i> Wind Panels:</span>
+            <span><strong>4</strong></span>
+          </div>
+          <div class="weather-summary-item">
+            <span><i class="fas fa-ship"></i> Ferry Links:</span>
+            <span><strong>2</strong></span>
+          </div>
+          <div class="weather-summary-item">
+            <span><i class="fas fa-shield-alt"></i> Panel Status:</span>
+            <span style="color: #2ecc71;"><strong>Normal</strong></span>
+          </div>
         </div>
-        
-        <!-- Wind Controls -->
-        <div class="controls-section">
-            <div class="controls-title">Refresh all wind data simultaneously</div>
-            <div class="control-buttons">
-                <button class="control-btn" id="refreshWindBtn">
-                    <i class="fas fa-sync-alt"></i>
-                    Refresh Wind Data
-                </button>
-                <button class="control-btn" id="openAllWindBtn">
-                    <i class="fas fa-external-link-alt"></i>
-                    Open All Wind Pages
-                </button>
-                <button class="control-btn" id="printWindBtn">
-                    <i class="fas fa-print"></i>
-                    Print Wind Report
-                </button>
-            </div>
+      </div>
+
+      <div class="quick-stats-bar">
+        <div class="stat-item">
+          <div class="stat-icon">📏</div>
+          <div class="stat-content">
+            <h4>Route Length</h4>
+            <p>~12 Nautical Miles</p>
+          </div>
         </div>
-        
-        <!-- Wind Forecast Grid - 4 WIND CARDS -->
-        <div class="forecast-grid">
-            <!-- Card 1: Pam Rocks -->
-            <div class="forecast-card">
-                <div class="card-header">
-                    <div class="location-info">
-                        <div class="location-name">
-                            <i class="fas fa-mountain"></i>
-                            Pam Rocks
-                        </div>
-                        <div class="location-subtitle">Howe Sound Marine Station (WAS) • Primary Route Marker</div>
-                        <div class="location-distance">
-                            <i class="fas fa-location-arrow"></i>
-                            ~5 NM from Langdale • Critical for departure decisions
-                        </div>
-                    </div>
-                    <div class="location-icon">🏔️</div>
-                </div>
-                <div class="card-content">
-                    <div class="loading-placeholder" id="loading1">
-                        <div class="loading-spinner"></div>
-                        <p>Loading Environment Canada marine conditions...</p>
-                        <p style="font-size: 0.85rem; color: #64748b;">
-                            Station: WAS • Howe Sound • Updates hourly
-                        </p>
-                    </div>
-                    <iframe 
-                        class="iframe-container" 
-                        id="iframe1"
-                        src="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=15200&stationID=WAS"
-                        data-base-src="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=15200&stationID=WAS"
-                        title="Pam Rocks Marine Current Conditions"
-                        onload="hideLoader('loading1')"
-                        onerror="handleIframeError('iframe1', 'loading1')"
-                        loading="eager">
-                    </iframe>
-                </div>
-                <div class="card-footer">
-                    <div class="data-source">
-                        <i class="fas fa-database"></i>
-                        <span>Environment Canada • Station WAS</span>
-                    </div>
-                    <a href="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=15200&stationID=WAS" 
-                       class="direct-link" target="_blank" rel="noopener">
-                        <i class="fas fa-external-link-alt"></i>
-                        Full Data
-                    </a>
-                </div>
-            </div>
-            
-            <!-- Card 2: Point Atkinson -->
-            <div class="forecast-card">
-                <div class="card-header">
-                    <div class="location-info">
-                        <div class="location-name">
-                            <i class="fas fa-lighthouse"></i>
-                            Point Atkinson
-                        </div>
-                        <div class="location-subtitle">Lighthouse Station (WSB) • Entrance to Howe Sound</div>
-                        <div class="location-distance">
-                            <i class="fas fa-location-arrow"></i>
-                            ~8 NM from Langdale • Shows outer sound conditions
-                        </div>
-                    </div>
-                    <div class="location-icon">🗼</div>
-                </div>
-                <div class="card-content">
-                    <div class="loading-placeholder" id="loading2">
-                        <div class="loading-spinner"></div>
-                        <p>Loading Environment Canada marine conditions...</p>
-                        <p style="font-size: 0.85rem; color: #64748b;">
-                            Station: WSB • Entrance to Howe Sound
-                        </p>
-                    </div>
-                    <iframe 
-                        class="iframe-container" 
-                        id="iframe2"
-                        src="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=WSB"
-                        data-base-src="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=WSB"
-                        title="Point Atkinson Marine Current Conditions"
-                        onload="hideLoader('loading2')"
-                        onerror="handleIframeError('iframe2', 'loading2')"
-                        loading="eager">
-                    </iframe>
-                </div>
-                <div class="card-footer">
-                    <div class="data-source">
-                        <i class="fas fa-database"></i>
-                        <span>Environment Canada • Station WSB</span>
-                    </div>
-                    <a href="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=WSB" 
-                       class="direct-link" target="_blank" rel="noopener">
-                        <i class="fas fa-external-link-alt"></i>
-                        Full Data
-                    </a>
-                </div>
-            </div>
-            
-            <!-- Card 3: English Bay Buoy -->
-            <div class="forecast-card">
-                <div class="card-header">
-                    <div class="location-info">
-                        <div class="location-name">
-                            <i class="fas fa-water"></i>
-                            English Bay
-                        </div>
-                        <div class="location-subtitle">Buoy 46304 • Strait of Georgia • Wave Height Data</div>
-                        <div class="location-distance">
-                            <i class="fas fa-location-arrow"></i>
-                            ~15 NM from Langdale • Shows swell conditions
-                        </div>
-                    </div>
-                    <div class="location-icon">🌊</div>
-                </div>
-                <div class="card-content">
-                    <div class="loading-placeholder" id="loading3">
-                        <div class="loading-spinner"></div>
-                        <p>Loading Environment Canada marine conditions...</p>
-                        <p style="font-size: 0.85rem; color: #64748b;">
-                            Buoy: 46304 • English Bay Entrance
-                        </p>
-                    </div>
-                    <iframe 
-                        class="iframe-container" 
-                        id="iframe3"
-                        src="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46304"
-                        data-base-src="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46304"
-                        title="English Bay Buoy 46304 Current Conditions"
-                        onload="hideLoader('loading3')"
-                        onerror="handleIframeError('iframe3', 'loading3')"
-                        loading="eager">
-                    </iframe>
-                </div>
-                <div class="card-footer">
-                    <div class="data-source">
-                        <i class="fas fa-database"></i>
-                        <span>Environment Canada • Buoy 46304</span>
-                    </div>
-                    <a href="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46304" 
-                       class="direct-link" target="_blank" rel="noopener">
-                        <i class="fas fa-external-link-alt"></i>
-                        Full Data
-                    </a>
-                </div>
-            </div>
-            
-            <!-- Card 4: Halibut Bank Buoy -->
-            <div class="forecast-card">
-                <div class="card-header">
-                    <div class="location-info">
-                        <div class="location-name">
-                            <i class="fas fa-anchor"></i>
-                            Halibut Bank
-                        </div>
-                        <div class="location-subtitle">Buoy 46146 • Outer Strait • Open Water Conditions</div>
-                        <div class="location-distance">
-                            <i class="fas fa-location-arrow"></i>
-                            ~18 NM from Langdale • For advanced warning
-                        </div>
-                    </div>
-                    <div class="location-icon">⚓</div>
-                </div>
-                <div class="card-content">
-                    <div class="loading-placeholder" id="loading4">
-                        <div class="loading-spinner"></div>
-                        <p>Loading Environment Canada marine conditions...</p>
-                        <p style="font-size: 0.85rem; color: #64748b;">
-                            Buoy: 46146 • Halibut Bank
-                        </p>
-                    </div>
-                    <iframe 
-                        class="iframe-container" 
-                        id="iframe4"
-                        src="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46146"
-                        data-base-src="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46146"
-                        title="Halibut Bank Buoy 46146 Current Conditions"
-                        onload="hideLoader('loading4')"
-                        onerror="handleIframeError('iframe4', 'loading4')"
-                        loading="eager">
-                    </iframe>
-                </div>
-                <div class="card-footer">
-                    <div class="data-source">
-                        <i class="fas fa-database"></i>
-                        <span>Environment Canada • Buoy 46146</span>
-                    </div>
-                    <a href="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46146" 
-                       class="direct-link" target="_blank" rel="noopener">
-                        <i class="fas fa-external-link-alt"></i>
-                        Full Data
-                    </a>
-                </div>
-            </div>
+        <div class="stat-item">
+          <div class="stat-icon">⏱️</div>
+          <div class="stat-content">
+            <h4>Avg. Crossing Time</h4>
+            <p>45–60 Minutes</p>
+          </div>
         </div>
-        
-        <!-- Quick Info Panel - Crew Critical Information -->
-        <div class="quick-info-panel">
-            <div class="info-panel-title">
-                <i class="fas fa-clipboard-list"></i>
-                Crew Briefing & Critical Information
-            </div>
-            <div class="info-grid">
-                <div class="info-item safety">
-                    <div class="info-icon">🛡️</div>
-                    <div class="info-content">
-                        <h4>Safety Protocol</h4>
-                        <p>Always conduct pre-departure safety briefing. Ensure all passengers have lifejackets accessible. Monitor VHF Channel 16 continuously.</p>
-                    </div>
-                </div>
-                <div class="info-item wind">
-                    <div class="info-icon">🌬️</div>
-                    <div class="info-content">
-                        <h4>Wind Decision Matrix</h4>
-                        <p>Base departure decisions primarily on Pam Rocks. If winds exceed 25 knots at any station, consult with operations manager before departure.</p>
-                    </div>
-                </div>
-                <div class="info-item operations">
-                    <div class="info-icon">⏱️</div>
-                    <div class="info-content">
-                        <h4>Passenger Transfer Timing</h4>
-                        <p>Allow 15–20 minutes for passenger transfer between HSB ferry and Stormaway. Check ferry schedules below for precise timing before each sailing.</p>
-                    </div>
-                </div>
-                <div class="info-item">
-                    <div class="info-icon">📞</div>
-                    <div class="info-content">
-                        <h4>Emergency Contacts</h4>
-                        <p>Coast Guard: VHF 16 • BC Ferries Dispatch: 1-888-223-3779 • Langdale Terminal: 604-886-2242 • Local working channel (if applicable): per company SOP.</p>
-                    </div>
-                </div>
-            </div>
+        <div class="stat-item">
+          <div class="stat-icon">👥</div>
+          <div class="stat-content">
+            <h4>Max Passengers</h4>
+            <p>12 Persons</p>
+          </div>
         </div>
-        
-        <!-- Ferry Schedules Section -->
-        <div class="marine-conditions-section">
-            <div class="section-title-row">
-                <div>
-                    <h2 class="section-title">
-                        <i class="fas fa-ship"></i>
-                        Connecting Ferry Schedules
-                    </h2>
-                    <div class="section-subtitle">
-                        HSB ⇄ Langdale ferry times – critical for passenger transfers to/from Stormaway. Use these pages to confirm arrivals and departures before each run.
-                    </div>
-                </div>
-            </div>
+        <div class="stat-item">
+          <div class="stat-icon">📞</div>
+          <div class="stat-content">
+            <h4>Marine VHF</h4>
+            <p>Channel 16</p>
+          </div>
         </div>
-        
-        <!-- Ferry Controls -->
-        <div class="controls-section">
-            <div class="controls-title">Monitor connecting ferry arrival/departure times</div>
-            <div class="control-buttons">
-                <button class="control-btn" id="refreshFerryBtn">
-                    <i class="fas fa-sync-alt"></i>
-                    Open Ferry Schedules
-                </button>
-                <button class="control-btn" id="openAllFerryBtn">
-                    <i class="fas fa-external-link-alt"></i>
-                    Open All Ferry Pages
-                </button>
-                <button class="control-btn" id="fullscreenBtn">
-                    <i class="fas fa-expand"></i>
-                    Fullscreen Mode
-                </button>
-            </div>
+      </div>
+    </header>
+
+    <div class="status-bar">
+      <div class="last-updated">
+        <i class="fas fa-clock"></i>
+        <div>
+          <span id="currentDateTime">Loading date and time...</span>
+          <div class="panel-staleness-warning" id="panelStalenessWarning">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span id="panelWarningText">Some panels haven’t been refreshed recently. Please refresh.</span>
+          </div>
         </div>
-        
-        <!-- Ferry Schedule Grid - 2 FERRY CARDS -->
-        <div class="forecast-grid ferry-grid">
-            <!-- Card 5: HSB to Langdale -->
-            <div class="forecast-card">
-                <div class="card-header ferry">
-                    <div class="location-info">
-                        <div class="location-name">
-                            <i class="fas fa-arrow-right"></i>
-                            HSB → Langdale
-                        </div>
-                        <div class="location-subtitle">Horseshoe Bay to Langdale Ferry • Route 3 • Passenger Arrival</div>
-                        <div class="location-distance">
-                            <i class="fas fa-clock"></i>
-                            Crossing time: ~40 minutes • Critical for passenger pickup
-                        </div>
-                    </div>
-                    <div class="location-icon ferry">⛴️</div>
-                </div>
-                <div class="card-content">
-                    <div class="ferry-content-container">
-                        <div style="font-size: 3.5rem; margin-bottom: 20px; color: #10b981;">
-                            <i class="fas fa-ship"></i>
-                        </div>
-                        <h3 style="margin-bottom: 15px; color: #003f7d;">HSB → Langdale Ferry</h3>
-                        <p style="margin-bottom: 20px; color: #666; max-width: 350px; line-height: 1.5;">
-                            Check real-time ferry schedules, sailing times, and current conditions for the Horseshoe Bay to Langdale route. This determines when passengers will arrive for Stormaway transfer.
-                        </p>
-                        <div class="ferry-buttons">
-                            <a href="https://www.bcferries.com/current-conditions/HSB-LNG" 
-                               class="ferry-btn ferry-btn-primary" 
-                               target="_blank" 
-                               rel="noopener">
-                                <i class="fas fa-ship"></i>
-                                View Live Schedule & Status
-                            </a>
-                            <a href="https://www.bcferries.com/schedules/mainland/hbla-current.php" 
-                               class="ferry-btn ferry-btn-secondary" 
-                               target="_blank" 
-                               rel="noopener">
-                                <i class="fas fa-calendar-alt"></i>
-                                View Full Timetable
-                            </a>
-                        </div>
-                        <p style="margin-top: 25px; font-size: 0.85rem; color: #888;">
-                            <i class="fas fa-info-circle"></i>
-                            Updates every 5–10 minutes • Route 3 • Check for delays and overloads
-                        </p>
-                    </div>
-                </div>
-                <div class="card-footer">
-                    <div class="data-source">
-                        <i class="fas fa-ship"></i>
-                        <span>BC Ferries • Route 3 • Mainland → Sunshine Coast</span>
-                    </div>
-                    <a href="https://www.bcferries.com/current-conditions/HSB-LNG" 
-                       class="direct-link ferry" target="_blank" rel="noopener">
-                        <i class="fas fa-external-link-alt"></i>
-                        Live Status
-                    </a>
-                </div>
-            </div>
-            
-            <!-- Card 6: Langdale to HSB -->
-            <div class="forecast-card">
-                <div class="card-header ferry">
-                    <div class="location-info">
-                        <div class="location-name">
-                            <i class="fas fa-arrow-left"></i>
-                            Langdale → HSB
-                        </div>
-                        <div class="location-subtitle">Langdale to Horseshoe Bay Ferry • Route 3 • Passenger Departure</div>
-                        <div class="location-distance">
-                            <i class="fas fa-clock"></i>
-                            Crossing time: ~40 minutes • Critical for passenger drop-off
-                        </div>
-                    </div>
-                    <div class="location-icon ferry">⛴️</div>
-                </div>
-                <div class="card-content">
-                    <div class="ferry-content-container">
-                        <div style="font-size: 3.5rem; margin-bottom: 20px; color: #10b981;">
-                            <i class="fas fa-ship"></i>
-                        </div>
-                        <h3 style="margin-bottom: 15px; color: #003f7d;">Langdale → HSB Ferry</h3>
-                        <p style="margin-bottom: 20px; color: #666; max-width: 350px; line-height: 1.5;">
-                            Check real-time ferry schedules, sailing times, and current conditions for the Langdale to Horseshoe Bay route. This determines when passengers need to depart Stormaway for connections.
-                        </p>
-                        <div class="ferry-buttons">
-                            <a href="https://www.bcferries.com/current-conditions/LNG-HSB" 
-                               class="ferry-btn ferry-btn-primary" 
-                               target="_blank" 
-                               rel="noopener">
-                                <i class="fas fa-ship"></i>
-                                View Live Schedule & Status
-                            </a>
-                            <a href="https://www.bcferries.com/schedules/mainland/lghs-current.php" 
-                               class="ferry-btn ferry-btn-secondary" 
-                               target="_blank" 
-                               rel="noopener">
-                                <i class="fas fa-calendar-alt"></i>
-                                View Full Timetable
-                            </a>
-                        </div>
-                        <p style="margin-top: 25px; font-size: 0.85rem; color: #888;">
-                            <i class="fas fa-info-circle"></i>
-                            Updates every 5–10 minutes • Route 3 • Check for delays and overloads
-                        </p>
-                    </div>
-                </div>
-                <div class="card-footer">
-                    <div class="data-source">
-                        <i class="fas fa-ship"></i>
-                        <span>BC Ferries • Route 3 • Sunshine Coast → Mainland</span>
-                    </div>
-                    <a href="https://www.bcferries.com/current-conditions/LNG-HSB" 
-                       class="direct-link ferry" target="_blank" rel="noopener">
-                        <i class="fas fa-external-link-alt"></i>
-                        Live Status
-                    </a>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Footer -->
-        <footer class="dashboard-footer">
-            <div class="footer-content">
-                <p style="font-size: 1.2rem; margin-bottom: 10px;">
-                    <strong>Stormaway Ferry • BC Ferries Route 13</strong>
-                </p>
-                <p style="margin-bottom: 20px;">
-                    Professional marine operations dashboard for safe and efficient small vessel operations in Howe Sound.
-                </p>
-                
-                <div class="footer-links">
-                    <a href="https://www.bcferries.com/" class="footer-link" target="_blank" rel="noopener">
-                        <i class="fas fa-ship"></i>
-                        BC Ferries Official
-                    </a>
-                    <a href="https://weather.gc.ca/marine/marine_e.html" class="footer-link" target="_blank" rel="noopener">
-                        <i class="fas fa-wind"></i>
-                        ECCC Marine Forecasts
-                    </a>
-                    <a href="https://www.bcferries.com/current-conditions/HSB-LNG" class="footer-link" target="_blank" rel="noopener">
-                        <i class="fas fa-arrow-right"></i>
-                        HSB → Langdale
-                    </a>
-                    <a href="https://www.bcferries.com/current-conditions/LNG-HSB" class="footer-link" target="_blank" rel="noopener">
-                        <i class="fas fa-arrow-left"></i>
-                        Langdale → HSB
-                    </a>
-                    <a href="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=15200&stationID=WAS" class="footer-link" target="_blank" rel="noopener">
-                        <i class="fas fa-mountain"></i>
-                        Pam Rocks
-                    </a>
-                </div>
-                
-                <div class="disclaimer">
-                    ⚠️ <strong>IMPORTANT SAFETY NOTICE:</strong> This dashboard provides operational awareness tools only. The master of the vessel is responsible for all departure and navigation decisions. Always check official marine forecasts, NOTAMs, and tide tables before departure. This tool does not replace professional judgment, local knowledge, or official weather sources. Winds can vary significantly in Howe Sound due to local topography. Monitor conditions continuously during operations.
-                </div>
-            </div>
-        </footer>
+      </div>
+
+      <div class="live-indicator">
+        <span class="live-dot"></span>
+        <span>External sources: Environment Canada (wind) + BC Ferries (schedules)</span>
+        <span style="opacity:.9;">• Auto-refresh wind panels every 30 minutes</span>
+      </div>
     </div>
 
-    <script>
-        // Data sources (used for opening external pages and refreshing iframes)
-        const DATA_SOURCES = {
-            wind: [
-                {
-                    id: 'iframe1',
-                    name: 'Pam Rocks',
-                    url: 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=15200&stationID=WAS',
-                    type: 'wind',
-                    distance: '5 NM',
-                    importance: 'PRIMARY - Departure decision station'
-                },
-                {
-                    id: 'iframe2', 
-                    name: 'Point Atkinson',
-                    url: 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=WSB',
-                    type: 'wind',
-                    distance: '8 NM',
-                    importance: 'Entrance conditions'
-                },
-                {
-                    id: 'iframe3',
-                    name: 'English Bay',
-                    url: 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46304',
-                    type: 'wind',
-                    distance: '15 NM',
-                    importance: 'Swell and wave height'
-                },
-                {
-                    id: 'iframe4',
-                    name: 'Halibut Bank',
-                    url: 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46146',
-                    type: 'wind',
-                    distance: '18 NM',
-                    importance: 'Open water warning'
-                }
-            ],
-            ferry: [
-                {
-                    name: 'HSB → Langdale',
-                    url: 'https://www.bcferries.com/current-conditions/HSB-LNG',
-                    type: 'ferry',
-                    timetable: 'https://www.bcferries.com/schedules/mainland/hbla-current.php',
-                    purpose: 'Passenger arrival for Stormaway'
-                },
-                {
-                    name: 'Langdale → HSB',
-                    url: 'https://www.bcferries.com/current-conditions/LNG-HSB',
-                    type: 'ferry',
-                    timetable: 'https://www.bcferries.com/schedules/mainland/lghs-current.php',
-                    purpose: 'Passenger departure from Stormaway'
-                }
-            ]
-        };
+    <div class="marine-conditions-section">
+      <div class="section-title-row">
+        <div>
+          <h2 class="section-title">
+            <i class="fas fa-wind"></i>
+            Marine Wind Conditions
+          </h2>
+          <div class="section-subtitle">
+            These are embedded panels from external sources. “Fresh/Stale” below tracks <strong>panel refresh time</strong> (when this dashboard last reloaded the panel),
+            not the official observation timestamp. Use “Open Full Data” to confirm timestamps before decisions.
+          </div>
+        </div>
+      </div>
 
-        // Initialize dashboard
-        document.addEventListener('DOMContentLoaded', function() {
-            updateDateTime();
-            setInterval(updateDateTime, 60000); // Update time every minute
-            
-            setupEventListeners();
-            
-            // Auto-refresh wind every 30 minutes
-            setInterval(refreshWindData, 1800000);
-            
-            // Welcome notification
-            setTimeout(() => {
-                showNotification('Stormaway Operations Dashboard loaded • Ready for Route 13 operations', 'success');
-            }, 1500);
-            
-            // Keyboard shortcut help (Ctrl+Shift+H)
-            document.addEventListener('keydown', function(e) {
-                if (e.ctrlKey && e.shiftKey && (e.key === 'H' || e.key === 'h')) {
-                    e.preventDefault();
-                    showKeyboardShortcuts();
-                }
-            });
+      <div class="wind-thresholds">
+        <div class="thresholds-title">
+          <i class="fas fa-exclamation-triangle"></i>
+          <span>Stormaway Wind Safety Thresholds</span>
+        </div>
+        <div class="thresholds-grid">
+          <div class="threshold-item">
+            <div class="threshold-indicator safe"></div>
+            <div><strong>Safe Operations:</strong> &lt; 20 knots</div>
+          </div>
+          <div class="threshold-item">
+            <div class="threshold-indicator caution"></div>
+            <div><strong>Exercise Caution:</strong> 20–25 knots</div>
+          </div>
+          <div class="threshold-item">
+            <div class="threshold-indicator danger"></div>
+            <div><strong>Consider Delaying:</strong> &gt; 25 knots</div>
+          </div>
+          <div class="threshold-item">
+            <div class="threshold-indicator danger"></div>
+            <div><strong>Do Not Sail:</strong> &gt; 30 knots</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls-section">
+      <div class="controls-title">Refresh all wind panels simultaneously</div>
+      <div class="control-buttons">
+        <button class="control-btn" id="refreshWindBtn">
+          <i class="fas fa-sync-alt"></i>
+          Refresh Wind Panels
+        </button>
+        <button class="control-btn" id="openAllWindBtn">
+          <i class="fas fa-external-link-alt"></i>
+          Open All Wind Pages
+        </button>
+        <button class="control-btn" id="printWindBtn">
+          <i class="fas fa-print"></i>
+          Print Report
+        </button>
+      </div>
+    </div>
+
+    <div class="forecast-grid">
+      <!-- Card 1 -->
+      <div class="forecast-card">
+        <div class="card-header">
+          <div class="location-info">
+            <div class="location-name"><i class="fas fa-mountain"></i> Pam Rocks</div>
+            <div class="location-subtitle">Howe Sound Marine Station (WAS) • Primary route marker</div>
+            <div class="location-distance"><i class="fas fa-location-arrow"></i> ~5 NM from Langdale • Primary departure reference</div>
+          </div>
+          <div class="location-icon">🏔️</div>
+        </div>
+
+        <div class="card-content">
+          <div class="card-actions">
+            <div class="hint">
+              <i class="fas fa-circle-info"></i>
+              If panel is blank, use the button.
+            </div>
+            <a class="mini-link" href="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=15200&stationID=WAS" target="_blank" rel="noopener noreferrer">
+              <i class="fas fa-up-right-from-square"></i> Open Full Data
+            </a>
+          </div>
+
+          <div class="loading-placeholder" id="loading1">
+            <div class="loading-spinner"></div>
+            <p>Loading Environment Canada panel…</p>
+            <p style="font-size: 0.85rem; color: #64748b;">Station: WAS • Updates externally</p>
+          </div>
+
+          <div class="panel-refresh-indicator" id="refresh1">
+            <div class="refresh-status">
+              <span class="refresh-dot" id="refreshDot1"></span>
+              <span id="refreshText1">Checking panel refresh…</span>
+            </div>
+            <span id="lastRefreshed1"></span>
+          </div>
+
+          <iframe
+            class="iframe-container"
+            id="iframe1"
+            src="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=15200&stationID=WAS"
+            data-base-src="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=15200&stationID=WAS"
+            title="Pam Rocks Marine Current Conditions"
+            loading="eager">
+          </iframe>
+        </div>
+
+        <div class="card-footer">
+          <div class="data-source"><i class="fas fa-database"></i><span>Environment Canada • Station WAS</span></div>
+          <a href="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=15200&stationID=WAS" class="direct-link" target="_blank" rel="noopener noreferrer">
+            <i class="fas fa-external-link-alt"></i> Full Data
+          </a>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="forecast-card">
+        <div class="card-header">
+          <div class="location-info">
+            <div class="location-name"><i class="fas fa-lighthouse"></i> Point Atkinson</div>
+            <div class="location-subtitle">Lighthouse Station (WSB) • Entrance to Howe Sound</div>
+            <div class="location-distance"><i class="fas fa-location-arrow"></i> ~8 NM from Langdale • Outer sound indicator</div>
+          </div>
+          <div class="location-icon">🗼</div>
+        </div>
+
+        <div class="card-content">
+          <div class="card-actions">
+            <div class="hint"><i class="fas fa-circle-info"></i> If panel is blank, use the button.</div>
+            <a class="mini-link" href="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=WSB" target="_blank" rel="noopener noreferrer">
+              <i class="fas fa-up-right-from-square"></i> Open Full Data
+            </a>
+          </div>
+
+          <div class="loading-placeholder" id="loading2">
+            <div class="loading-spinner"></div>
+            <p>Loading Environment Canada panel…</p>
+            <p style="font-size: 0.85rem; color: #64748b;">Station: WSB • Updates externally</p>
+          </div>
+
+          <div class="panel-refresh-indicator" id="refresh2">
+            <div class="refresh-status">
+              <span class="refresh-dot" id="refreshDot2"></span>
+              <span id="refreshText2">Checking panel refresh…</span>
+            </div>
+            <span id="lastRefreshed2"></span>
+          </div>
+
+          <iframe
+            class="iframe-container"
+            id="iframe2"
+            src="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=WSB"
+            data-base-src="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=WSB"
+            title="Point Atkinson Marine Current Conditions"
+            loading="eager">
+          </iframe>
+        </div>
+
+        <div class="card-footer">
+          <div class="data-source"><i class="fas fa-database"></i><span>Environment Canada • Station WSB</span></div>
+          <a href="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=WSB" class="direct-link" target="_blank" rel="noopener noreferrer">
+            <i class="fas fa-external-link-alt"></i> Full Data
+          </a>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="forecast-card">
+        <div class="card-header">
+          <div class="location-info">
+            <div class="location-name"><i class="fas fa-water"></i> English Bay</div>
+            <div class="location-subtitle">Buoy 46304 • Strait of Georgia • Wave context</div>
+            <div class="location-distance"><i class="fas fa-location-arrow"></i> ~15 NM from Langdale • Swell conditions</div>
+          </div>
+          <div class="location-icon">🌊</div>
+        </div>
+
+        <div class="card-content">
+          <div class="card-actions">
+            <div class="hint"><i class="fas fa-circle-info"></i> If panel is blank, use the button.</div>
+            <a class="mini-link" href="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46304" target="_blank" rel="noopener noreferrer">
+              <i class="fas fa-up-right-from-square"></i> Open Full Data
+            </a>
+          </div>
+
+          <div class="loading-placeholder" id="loading3">
+            <div class="loading-spinner"></div>
+            <p>Loading Environment Canada panel…</p>
+            <p style="font-size: 0.85rem; color: #64748b;">Buoy: 46304 • Updates externally</p>
+          </div>
+
+          <div class="panel-refresh-indicator" id="refresh3">
+            <div class="refresh-status">
+              <span class="refresh-dot" id="refreshDot3"></span>
+              <span id="refreshText3">Checking panel refresh…</span>
+            </div>
+            <span id="lastRefreshed3"></span>
+          </div>
+
+          <iframe
+            class="iframe-container"
+            id="iframe3"
+            src="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46304"
+            data-base-src="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46304"
+            title="English Bay Buoy 46304 Current Conditions"
+            loading="eager">
+          </iframe>
+        </div>
+
+        <div class="card-footer">
+          <div class="data-source"><i class="fas fa-database"></i><span>Environment Canada • Buoy 46304</span></div>
+          <a href="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46304" class="direct-link" target="_blank" rel="noopener noreferrer">
+            <i class="fas fa-external-link-alt"></i> Full Data
+          </a>
+        </div>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="forecast-card">
+        <div class="card-header">
+          <div class="location-info">
+            <div class="location-name"><i class="fas fa-anchor"></i> Halibut Bank</div>
+            <div class="location-subtitle">Buoy 46146 • Outer Strait • Open water warning</div>
+            <div class="location-distance"><i class="fas fa-location-arrow"></i> ~18 NM from Langdale • Advanced warning</div>
+          </div>
+          <div class="location-icon">⚓</div>
+        </div>
+
+        <div class="card-content">
+          <div class="card-actions">
+            <div class="hint"><i class="fas fa-circle-info"></i> If panel is blank, use the button.</div>
+            <a class="mini-link" href="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46146" target="_blank" rel="noopener noreferrer">
+              <i class="fas fa-up-right-from-square"></i> Open Full Data
+            </a>
+          </div>
+
+          <div class="loading-placeholder" id="loading4">
+            <div class="loading-spinner"></div>
+            <p>Loading Environment Canada panel…</p>
+            <p style="font-size: 0.85rem; color: #64748b;">Buoy: 46146 • Updates externally</p>
+          </div>
+
+          <div class="panel-refresh-indicator" id="refresh4">
+            <div class="refresh-status">
+              <span class="refresh-dot" id="refreshDot4"></span>
+              <span id="refreshText4">Checking panel refresh…</span>
+            </div>
+            <span id="lastRefreshed4"></span>
+          </div>
+
+          <iframe
+            class="iframe-container"
+            id="iframe4"
+            src="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46146"
+            data-base-src="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46146"
+            title="Halibut Bank Buoy 46146 Current Conditions"
+            loading="eager">
+          </iframe>
+        </div>
+
+        <div class="card-footer">
+          <div class="data-source"><i class="fas fa-database"></i><span>Environment Canada • Buoy 46146</span></div>
+          <a href="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46146" class="direct-link" target="_blank" rel="noopener noreferrer">
+            <i class="fas fa-external-link-alt"></i> Full Data
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="quick-info-panel">
+      <div class="info-panel-title"><i class="fas fa-clipboard-list"></i> Crew Briefing & Critical Information</div>
+      <div class="info-grid">
+        <div class="info-item safety">
+          <div class="info-icon">🛡️</div>
+          <div class="info-content">
+            <h4>Panel Refresh Protocol</h4>
+            <p>
+              Treat this as an operational awareness tool. If a wind panel shows “stale” (not refreshed recently),
+              refresh the panels and confirm the official observation timestamp on the source page before departure decisions.
+            </p>
+          </div>
+        </div>
+        <div class="info-item wind">
+          <div class="info-icon">🌬️</div>
+          <div class="info-content">
+            <h4>Wind Decision Matrix</h4>
+            <p>Base departure decisions primarily on Pam Rocks. If winds exceed 25 knots at any station, consult with operations manager before departure.</p>
+          </div>
+        </div>
+        <div class="info-item operations">
+          <div class="info-icon">⏱️</div>
+          <div class="info-content">
+            <h4>Passenger Transfer Timing</h4>
+            <p>Allow 15–20 minutes for passenger transfer between HSB ferry and Stormaway. Confirm ferry status below before each sailing.</p>
+          </div>
+        </div>
+        <div class="info-item">
+          <div class="info-icon">📞</div>
+          <div class="info-content">
+            <h4>Emergency Contacts</h4>
+            <p>Coast Guard: VHF 16 • BC Ferries Dispatch: 1-888-223-3779 • Langdale Terminal: 604-886-2242 • Local working channel: per SOP.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="marine-conditions-section">
+      <div class="section-title-row">
+        <div>
+          <h2 class="section-title"><i class="fas fa-ship"></i> Connecting Ferry Schedules</h2>
+          <div class="section-subtitle">
+            Use these official links to confirm arrivals/departures and delays for transfer planning.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls-section">
+      <div class="controls-title">Open official ferry pages</div>
+      <div class="control-buttons">
+        <button class="control-btn" id="openFerryBtn">
+          <i class="fas fa-external-link-alt"></i>
+          Open Live Status
+        </button>
+        <button class="control-btn" id="openAllFerryBtn">
+          <i class="fas fa-external-link-alt"></i>
+          Open Live + Timetables
+        </button>
+        <button class="control-btn" id="fullscreenBtn">
+          <i class="fas fa-expand"></i>
+          Fullscreen Mode
+        </button>
+      </div>
+    </div>
+
+    <div class="forecast-grid ferry-grid">
+      <div class="forecast-card">
+        <div class="card-header ferry">
+          <div class="location-info">
+            <div class="location-name"><i class="fas fa-arrow-right"></i> HSB → Langdale</div>
+            <div class="location-subtitle">Route 3 • Passenger arrival</div>
+            <div class="location-distance"><i class="fas fa-clock"></i> Crossing time: ~40 min</div>
+          </div>
+          <div class="location-icon ferry">⛴️</div>
+        </div>
+        <div class="card-content">
+          <div class="ferry-content-container">
+            <div style="font-size: 3.5rem; margin-bottom: 20px; color: #10b981;"><i class="fas fa-ship"></i></div>
+            <h3 style="margin-bottom: 15px; color: #003f7d;">HSB → Langdale Ferry</h3>
+            <p style="margin-bottom: 20px; color: #666; max-width: 380px; line-height: 1.5;">
+              Check live schedule and status for Horseshoe Bay → Langdale.
+            </p>
+            <div class="ferry-buttons">
+              <a href="https://www.bcferries.com/current-conditions/HSB-LNG" class="ferry-btn ferry-btn-primary" target="_blank" rel="noopener noreferrer">
+                <i class="fas fa-ship"></i> View Live Status
+              </a>
+              <a href="https://www.bcferries.com/schedules/mainland/hbla-current.php" class="ferry-btn ferry-btn-secondary" target="_blank" rel="noopener noreferrer">
+                <i class="fas fa-calendar-alt"></i> View Timetable
+              </a>
+            </div>
+            <p style="margin-top: 25px; font-size: 0.85rem; color: #888;">
+              <i class="fas fa-info-circle"></i> Updates externally • Check for delays/overloads
+            </p>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="data-source"><i class="fas fa-ship"></i><span>BC Ferries • Route 3</span></div>
+          <a href="https://www.bcferries.com/current-conditions/HSB-LNG" class="direct-link ferry" target="_blank" rel="noopener noreferrer">
+            <i class="fas fa-external-link-alt"></i> Live Status
+          </a>
+        </div>
+      </div>
+
+      <div class="forecast-card">
+        <div class="card-header ferry">
+          <div class="location-info">
+            <div class="location-name"><i class="fas fa-arrow-left"></i> Langdale → HSB</div>
+            <div class="location-subtitle">Route 3 • Passenger departure</div>
+            <div class="location-distance"><i class="fas fa-clock"></i> Crossing time: ~40 min</div>
+          </div>
+          <div class="location-icon ferry">⛴️</div>
+        </div>
+        <div class="card-content">
+          <div class="ferry-content-container">
+            <div style="font-size: 3.5rem; margin-bottom: 20px; color: #10b981;"><i class="fas fa-ship"></i></div>
+            <h3 style="margin-bottom: 15px; color: #003f7d;">Langdale → HSB Ferry</h3>
+            <p style="margin-bottom: 20px; color: #666; max-width: 380px; line-height: 1.5;">
+              Check live schedule and status for Langdale → Horseshoe Bay.
+            </p>
+            <div class="ferry-buttons">
+              <a href="https://www.bcferries.com/current-conditions/LNG-HSB" class="ferry-btn ferry-btn-primary" target="_blank" rel="noopener noreferrer">
+                <i class="fas fa-ship"></i> View Live Status
+              </a>
+              <a href="https://www.bcferries.com/schedules/mainland/lghs-current.php" class="ferry-btn ferry-btn-secondary" target="_blank" rel="noopener noreferrer">
+                <i class="fas fa-calendar-alt"></i> View Timetable
+              </a>
+            </div>
+            <p style="margin-top: 25px; font-size: 0.85rem; color: #888;">
+              <i class="fas fa-info-circle"></i> Updates externally • Check for delays/overloads
+            </p>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="data-source"><i class="fas fa-ship"></i><span>BC Ferries • Route 3</span></div>
+          <a href="https://www.bcferries.com/current-conditions/LNG-HSB" class="direct-link ferry" target="_blank" rel="noopener noreferrer">
+            <i class="fas fa-external-link-alt"></i> Live Status
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <footer class="dashboard-footer">
+      <div class="footer-content">
+        <p style="font-size: 1.2rem; margin-bottom: 10px;"><strong>Stormaway Ferry • BC Ferries Route 13</strong></p>
+        <p style="margin-bottom: 20px;">Operational awareness dashboard for small vessel operations in Howe Sound.</p>
+
+        <div class="footer-links">
+          <a href="https://www.bcferries.com/" class="footer-link" target="_blank" rel="noopener noreferrer"><i class="fas fa-ship"></i> BC Ferries Official</a>
+          <a href="https://weather.gc.ca/marine/marine_e.html" class="footer-link" target="_blank" rel="noopener noreferrer"><i class="fas fa-wind"></i> ECCC Marine</a>
+          <a href="https://www.bcferries.com/current-conditions/HSB-LNG" class="footer-link" target="_blank" rel="noopener noreferrer"><i class="fas fa-arrow-right"></i> HSB → Langdale</a>
+          <a href="https://www.bcferries.com/current-conditions/LNG-HSB" class="footer-link" target="_blank" rel="noopener noreferrer"><i class="fas fa-arrow-left"></i> Langdale → HSB</a>
+          <a href="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=15200&stationID=WAS" class="footer-link" target="_blank" rel="noopener noreferrer"><i class="fas fa-mountain"></i> Pam Rocks</a>
+        </div>
+
+        <div class="disclaimer">
+          ⚠️ <strong>IMPORTANT SAFETY NOTICE:</strong> This dashboard provides operational awareness tools only.
+          The master of the vessel is responsible for all departure and navigation decisions.
+          Always consult official marine forecasts/warnings, Notices to Mariners, and tide/current information before sailing.
+          Winds can vary significantly in Howe Sound due to local topography. Monitor conditions continuously during operations.
+          <br><br>
+          ⚠️ <strong>PANEL REFRESH NOTICE:</strong> “Fresh/Stale” indicators reflect the time since this dashboard last refreshed each embedded panel.
+          They do <strong>not</strong> guarantee the official observation timestamp of the underlying data. Always verify timestamps on the official source page.
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // ===== CONFIG =====
+    const AUTO_REFRESH_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
+    const PANEL_FRESH_MIN = 30; // < 30 minutes since panel refresh
+    const PANEL_STALE_MIN = 60; // >= 60 minutes since panel refresh => stale
+
+    // External sources
+    const DATA_SOURCES = {
+      wind: [
+        {
+          id: 'iframe1',
+          name: 'Pam Rocks',
+          url: 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=15200&stationID=WAS',
+        },
+        {
+          id: 'iframe2',
+          name: 'Point Atkinson',
+          url: 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=WSB',
+        },
+        {
+          id: 'iframe3',
+          name: 'English Bay',
+          url: 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46304',
+        },
+        {
+          id: 'iframe4',
+          name: 'Halibut Bank',
+          url: 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46146',
+        },
+      ],
+      ferry: [
+        { name: 'HSB → Langdale', url: 'https://www.bcferries.com/current-conditions/HSB-LNG', timetable: 'https://www.bcferries.com/schedules/mainland/hbla-current.php' },
+        { name: 'Langdale → HSB', url: 'https://www.bcferries.com/current-conditions/LNG-HSB', timetable: 'https://www.bcferries.com/schedules/mainland/lghs-current.php' },
+      ],
+    };
+
+    // Track when each panel was last refreshed (by this dashboard)
+    const PANEL_STATE = {
+      lastRefreshed: { iframe1: null, iframe2: null, iframe3: null, iframe4: null },
+      lastWindRefresh: null,
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Wire iframe load listeners
+      DATA_SOURCES.wind.forEach((station) => {
+        const iframe = document.getElementById(station.id);
+        if (!iframe) return;
+
+        iframe.addEventListener('load', () => {
+          hideLoader(station.id);
+          recordPanelRefresh(station.id);
         });
 
-        // Update date & time with "next check" hint
-        function updateDateTime() {
-            const now = new Date();
-            const options = { 
-                weekday: 'long',
-                month: 'long', 
-                day: 'numeric',
-                hour: '2-digit', 
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false 
-            };
-            
-            const dateStr = now.toLocaleDateString('en-CA', options);
-            const minutes = now.getMinutes();
-            const minutesToNextHalfHour = minutes < 30 ? 30 - minutes : 60 - minutes;
-            
-            document.getElementById('currentDateTime').innerHTML = `
-                <strong>${dateStr}</strong> • Suggested next check in ${minutesToNextHalfHour} min
+        // Safety: if load never fires, show a fallback after 12s (some networks/extensions)
+        setTimeout(() => {
+          const loaderId = 'loading' + station.id.replace('iframe', '');
+          const loader = document.getElementById(loaderId);
+          // If loader still visible, mark as stale-ish + suggest opening directly
+          if (loader && loader.style.display !== 'none') {
+            loader.innerHTML = `
+              <div style="color: #f39c12; font-size: 2.5rem; margin-bottom: 20px;">
+                <i class="fas fa-triangle-exclamation"></i>
+              </div>
+              <div style="text-align:center; max-width:360px;">
+                <h4 style="margin-bottom:10px; color:#2c3e50;">Panel still loading</h4>
+                <p style="color:#7f8c8d; margin-bottom:18px; font-size:0.9rem; line-height:1.5;">
+                  If the embed is blocked or slow, use “Open Full Data” above or in the footer.
+                </p>
+              </div>
             `;
-        }
+            markPanelUnknown(station.id);
+            checkGlobalPanelStaleness();
+          }
+        }, 12000);
+      });
 
-        // Set up event listeners
-        function setupEventListeners() {
-            // Wind controls
-            document.getElementById('refreshWindBtn').addEventListener('click', function() {
-                refreshWindData();
-                showNotification('Refreshing all wind data from 4 stations...', 'info');
-            });
-            
-            document.getElementById('openAllWindBtn').addEventListener('click', function() {
-                DATA_SOURCES.wind.forEach(station => {
-                    window.open(station.url, '_blank', 'noopener,noreferrer');
-                });
-                showNotification('Opening all wind stations in separate tabs', 'info');
-            });
-            
-            document.getElementById('printWindBtn').addEventListener('click', function() {
-                window.print();
-                showNotification('Printing wind data dashboard...', 'info');
-            });
-            
-            // Ferry controls
-            document.getElementById('refreshFerryBtn').addEventListener('click', function() {
-                DATA_SOURCES.ferry.forEach(ferry => {
-                    window.open(ferry.url, '_blank', 'noopener,noreferrer');
-                });
-                showNotification('Opening both ferry schedules in new tabs', 'info');
-            });
-            
-            document.getElementById('openAllFerryBtn').addEventListener('click', function() {
-                DATA_SOURCES.ferry.forEach(ferry => {
-                    window.open(ferry.url, '_blank', 'noopener,noreferrer');
-                    window.open(ferry.timetable, '_blank', 'noopener,noreferrer');
-                });
-                showNotification('Opening all ferry schedule pages in separate tabs', 'info');
-            });
-            
-            // Fullscreen
-            document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
-            
-            // Keyboard shortcuts for efficiency
-            document.addEventListener('keydown', function(e) {
-                // Ctrl+1: Refresh wind data
-                if ((e.ctrlKey || e.metaKey) && e.key === '1') {
-                    e.preventDefault();
-                    refreshWindData();
-                }
-                // Ctrl+2: Open ferry live schedules
-                if ((e.ctrlKey || e.metaKey) && e.key === '2') {
-                    e.preventDefault();
-                    DATA_SOURCES.ferry.forEach(ferry => {
-                        window.open(ferry.url, '_blank', 'noopener,noreferrer');
-                    });
-                }
-                // Ctrl+F: Fullscreen
-                if ((e.ctrlKey || e.metaKey) && (e.key === 'f' || e.key === 'F')) {
-                    e.preventDefault();
-                    toggleFullscreen();
-                }
-                // Ctrl+P: Print
-                if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 'P')) {
-                    e.preventDefault();
-                    window.print();
-                }
-                // Escape to exit fullscreen
-                if (e.key === 'Escape' && document.fullscreenElement) {
-                    document.exitFullscreen();
-                }
-                // Ctrl+R (override default) to refresh wind cards instead of whole page
-                if ((e.ctrlKey || e.metaKey) && (e.key === 'r' || e.key === 'R')) {
-                    e.preventDefault();
-                    refreshWindData();
-                }
-            });
-        }
+      // Initial timestamp
+      PANEL_STATE.lastWindRefresh = new Date();
+      updateHeaderClock();
+      setInterval(updateHeaderClock, 15000); // keep countdown reasonably current
 
-        // Refresh all wind iframes with cache-busting
-        function refreshWindData() {
-            const timestamp = new Date().getTime();
-            DATA_SOURCES.wind.forEach(station => {
-                const iframe = document.getElementById(station.id);
-                if (iframe) {
-                    const baseSrc = iframe.getAttribute('data-base-src') || station.url;
-                    const separator = baseSrc.includes('?') ? '&' : '?';
-                    iframe.src = baseSrc + separator + '_t=' + timestamp;
-                    
-                    const loadingNumber = station.id.replace('iframe', '');
-                    const loadingEl = document.getElementById(`loading${loadingNumber}`);
-                    if (loadingEl) {
-                        loadingEl.style.display = 'flex';
-                    }
-                }
-            });
-            
-            updateDateTime();
-            showNotification('Wind data refreshed from all 4 stations', 'success');
-        }
+      // Auto refresh
+      setInterval(() => {
+        refreshWindPanels(true);
+      }, AUTO_REFRESH_INTERVAL_MS);
 
-        // Hide loader when iframe loads
-        function hideLoader(loaderId) {
-            const loader = document.getElementById(loaderId);
-            if (loader) {
-                loader.style.display = 'none';
-            }
-        }
+      // Update panel ages every minute
+      setInterval(() => {
+        updateAllPanelIndicators();
+        checkGlobalPanelStaleness();
+      }, 60 * 1000);
 
-        // Handle iframe errors gracefully
-        function handleIframeError(iframeId, loaderId) {
-            const loader = document.getElementById(loaderId);
-            const iframe = document.getElementById(iframeId);
-            
-            if (loader && iframe) {
-                const baseSrc = iframe.getAttribute('data-base-src') || iframe.src;
-                const station = DATA_SOURCES.wind.find(s => s.id === iframeId);
-                const stationName = station?.name || 'this station';
-                
-                loader.innerHTML = `
-                    <div style="color: #e74c3c; font-size: 2.5rem; margin-bottom: 20px;">
-                        <i class="fas fa-exclamation-triangle"></i>
-                    </div>
-                    <div style="text-align: center; max-width: 320px;">
-                        <h4 style="margin-bottom: 10px; color: #2c3e50;">Unable to load ${stationName}</h4>
-                        <p style="color: #7f8c8d; margin-bottom: 25px; font-size: 0.9rem; line-height: 1.5;">
-                            Environment Canada data for this station is temporarily unavailable in the embedded view.
-                            Use the button below to open the page directly in your browser.
-                        </p>
-                        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-                            <a href="${baseSrc}" 
-                               style="background: #ffc72c; color: #003f7d; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s ease;"
-                               target="_blank" rel="noopener"
-                               onmouseover="this.style.transform='scale(1.05)';"
-                               onmouseout="this.style.transform='scale(1)';">
-                                <i class="fas fa-external-link-alt"></i>
-                                Open Directly
-                            </a>
-                            <button onclick="retryLoad('${iframeId}')"
-                               style="background: #e8f4ff; color: #0055a5; border: 2px solid #0055a5;
-                                      padding: 10px 20px; border-radius: 8px; font-weight: 600; 
-                                      cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 8px;"
-                               onmouseover="this.style.background='#0055a5';this.style.color='white';"
-                               onmouseout="this.style.background='#e8f4ff';this.style.color='#0055a5';">
-                                <i class="fas fa-redo"></i>
-                                Try Again
-                            </button>
-                        </div>
-                    </div>
-                `;
-                
-                showNotification(`Failed to load ${stationName}. Click "Open Directly" to view it in your browser.`, 'warning');
-            }
-        }
+      setupEventListeners();
 
-        // Retry a specific iframe load
-        function retryLoad(iframeId) {
-            const iframe = document.getElementById(iframeId);
-            const iframeNumber = iframeId.replace('iframe', '');
-            const loader = document.getElementById(`loading${iframeNumber}`);
-            
-            if (iframe && loader) {
-                loader.innerHTML = `
-                    <div class="loading-spinner"></div>
-                    <p>Retrying connection to Environment Canada...</p>
-                `;
-                
-                const baseSrc = iframe.getAttribute('data-base-src') || iframe.src;
-                const timestamp = new Date().getTime();
-                const separator = baseSrc.includes('?') ? '&' : '?';
-                iframe.src = baseSrc + separator + '_retry=' + timestamp;
-            }
-        }
+      setTimeout(() => {
+        showNotification('Dashboard loaded • Panel refresh monitoring active', 'success');
+      }, 1000);
 
-        // Fullscreen toggle
-        function toggleFullscreen() {
-            const elem = document.documentElement;
-            const btn = document.getElementById('fullscreenBtn');
-            
-            if (!document.fullscreenElement &&
-                !document.webkitFullscreenElement &&
-                !document.mozFullScreenElement &&
-                !document.msFullscreenElement) {
-                if (elem.requestFullscreen) {
-                    elem.requestFullscreen();
-                } else if (elem.webkitRequestFullscreen) {
-                    elem.webkitRequestFullscreen();
-                } else if (elem.msRequestFullscreen) {
-                    elem.msRequestFullscreen();
-                }
-                if (btn) {
-                    btn.innerHTML = '<i class="fas fa-compress"></i> Exit Fullscreen';
-                }
-                showNotification('Entered fullscreen mode – optimized for bridge/toughbook view', 'info');
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                } else if (document.msExitFullscreen) {
-                    document.msExitFullscreen();
-                }
-                if (btn) {
-                    btn.innerHTML = '<i class="fas fa-expand"></i> Fullscreen Mode';
-                }
-            }
-        }
+      // First indicator update after a short delay
+      setTimeout(() => {
+        updateAllPanelIndicators();
+        checkGlobalPanelStaleness();
+      }, 3000);
+    });
 
-        // Keep fullscreen button text in sync
-        document.addEventListener('fullscreenchange', updateFullscreenButton);
-        document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
-        document.addEventListener('mozfullscreenchange', updateFullscreenButton);
-        document.addEventListener('MSFullscreenChange', updateFullscreenButton);
+    function updateHeaderClock() {
+      const now = new Date();
+      const options = {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      };
 
-        function updateFullscreenButton() {
-            const btn = document.getElementById('fullscreenBtn');
-            if (btn) {
-                if (document.fullscreenElement || 
-                    document.webkitFullscreenElement || 
-                    document.mozFullScreenElement ||
-                    document.msFullscreenElement) {
-                    btn.innerHTML = '<i class="fas fa-compress"></i> Exit Fullscreen';
-                } else {
-                    btn.innerHTML = '<i class="fas fa-expand"></i> Fullscreen Mode';
-                }
-            }
-        }
+      const dateStr = now.toLocaleString('en-CA', options);
 
-        // Toast-style notifications
-        function showNotification(message, type = 'info') {
-            const colors = {
-                info: '#0055a5',
-                success: '#27ae60',
-                warning: '#f39c12',
-                error: '#e74c3c'
-            };
-            
-            const icons = {
-                info: 'ℹ️',
-                success: '✅',
-                warning: '⚠️',
-                error: '❌'
-            };
-            
-            // Remove existing notifications
-            const existingNotifications = document.querySelectorAll('.custom-notification');
-            existingNotifications.forEach(note => note.remove());
-            
-            const notification = document.createElement('div');
-            notification.className = 'custom-notification';
-            notification.style.cssText = `
-                position: fixed;
-                bottom: 30px;
-                right: 30px;
-                background: ${colors[type] || colors.info};
-                color: white;
-                padding: 16px 24px;
-                border-radius: 10px;
-                box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-                z-index: 10000;
-                display: flex;
-                align-items: center;
-                gap: 15px;
-                animation: slideInRight 0.3s ease;
-                font-weight: 600;
-                font-size: 0.95rem;
-                max-width: 400px;
-                border-left: 5px solid ${type === 'warning' ? '#ff8e53' : type === 'error' ? '#ff4757' : '#3498db'};
-            `;
-            
-            notification.innerHTML = `
-                <span style="font-size: 1.4rem;">${icons[type] || icons.info}</span>
-                <div style="flex: 1;">
-                    <div style="font-weight: 700; margin-bottom: 3px; font-size: 1.05rem;">
-                        ${type === 'warning' ? 'NOTICE' : type === 'error' ? 'ALERT' : 'Stormaway Operations'}
-                    </div>
-                    <div>${message}</div>
-                </div>
-                <button onclick="this.parentElement.remove()" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; opacity: 0.7; padding: 0 0 0 15px;">
-                    ×
-                </button>
-            `;
-            
-            document.body.appendChild(notification);
-            
-            const duration = type === 'warning' || type === 'error' ? 10000 : 5000;
-            
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.style.animation = 'slideOutRight 0.3s ease';
-                    setTimeout(() => {
-                        if (notification.parentNode) {
-                            notification.parentNode.removeChild(notification);
-                        }
-                    }, 300);
-                }
-            }, duration);
-            
-            if (!document.querySelector('#notification-animations')) {
-                const style = document.createElement('style');
-                style.id = 'notification-animations';
-                style.textContent = `
-                    @keyframes slideInRight {
-                        from { transform: translateX(100%); opacity: 0; }
-                        to { transform: translateX(0); opacity: 1; }
-                    }
-                    @keyframes slideOutRight {
-                        from { transform: translateX(0); opacity: 1; }
-                        to { transform: translateX(100%); opacity: 0; }
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-        }
+      // Countdown to next auto refresh (based on lastWindRefresh)
+      const last = PANEL_STATE.lastWindRefresh || now;
+      const next = new Date(last.getTime() + AUTO_REFRESH_INTERVAL_MS);
+      const msLeft = Math.max(0, next - now);
+      const minLeft = Math.ceil(msLeft / 60000);
 
-        // Keyboard shortcuts helper
-        function showKeyboardShortcuts() {
-            showNotification(`
-                <div style="line-height: 1.6;">
-                    <strong>Keyboard Shortcuts:</strong><br>
-                    • <kbd>Ctrl+1</kbd> – Refresh all wind data<br>
-                    • <kbd>Ctrl+2</kbd> – Open ferry live schedules<br>
-                    • <kbd>Ctrl+F</kbd> – Toggle fullscreen<br>
-                    • <kbd>Ctrl+P</kbd> – Print dashboard<br>
-                    • <kbd>Ctrl+Shift+H</kbd> – Show this help
-                </div>
-            `, 'info');
+      document.getElementById('currentDateTime').innerHTML = `
+        <strong>${dateStr}</strong> • Next wind auto-refresh in ${minLeft} min
+      `;
+    }
+
+    function setupEventListeners() {
+      document.getElementById('refreshWindBtn').addEventListener('click', () => {
+        refreshWindPanels(false);
+        showNotification('Refreshing all wind panels…', 'info');
+      });
+
+      document.getElementById('openAllWindBtn').addEventListener('click', () => {
+        DATA_SOURCES.wind.forEach((station) => window.open(station.url, '_blank', 'noopener,noreferrer'));
+        showNotification('Opening all wind pages in new tabs', 'info');
+      });
+
+      document.getElementById('printWindBtn').addEventListener('click', () => {
+        window.print();
+        showNotification('Printing dashboard…', 'info');
+      });
+
+      document.getElementById('openFerryBtn').addEventListener('click', () => {
+        DATA_SOURCES.ferry.forEach((f) => window.open(f.url, '_blank', 'noopener,noreferrer'));
+        showNotification('Opening live ferry status pages', 'info');
+      });
+
+      document.getElementById('openAllFerryBtn').addEventListener('click', () => {
+        DATA_SOURCES.ferry.forEach((f) => {
+          window.open(f.url, '_blank', 'noopener,noreferrer');
+          window.open(f.timetable, '_blank', 'noopener,noreferrer');
+        });
+        showNotification('Opening ferry live + timetables', 'info');
+      });
+
+      document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+
+      // Keyboard shortcuts (kept conservative: no Ctrl+F override)
+      document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && (e.key === '1')) {
+          e.preventDefault();
+          refreshWindPanels(false);
         }
-    </script>
+        if ((e.ctrlKey || e.metaKey) && (e.key === '2')) {
+          e.preventDefault();
+          DATA_SOURCES.ferry.forEach((f) => window.open(f.url, '_blank', 'noopener,noreferrer'));
+        }
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 'P')) {
+          // keep print
+          e.preventDefault();
+          window.print();
+        }
+        if (e.key === 'Escape' && document.fullscreenElement) document.exitFullscreen();
+        if (e.ctrlKey && e.shiftKey && (e.key === 'H' || e.key === 'h')) {
+          e.preventDefault();
+          showKeyboardShortcuts();
+        }
+      });
+    }
+
+    function refreshWindPanels(isAuto) {
+      const timestamp = Date.now();
+      PANEL_STATE.lastWindRefresh = new Date();
+      updateHeaderClock();
+
+      // reset indicators visuals quickly
+      for (let i = 1; i <= 4; i++) {
+        const txt = document.getElementById(`refreshText${i}`);
+        const dot = document.getElementById(`refreshDot${i}`);
+        const last = document.getElementById(`lastRefreshed${i}`);
+        if (txt) txt.textContent = isAuto ? 'Auto-refreshing panel…' : 'Refreshing panel…';
+        if (dot) dot.className = 'refresh-dot';
+        if (last) last.textContent = 'Refreshing now…';
+      }
+
+      DATA_SOURCES.wind.forEach((station) => {
+        const iframe = document.getElementById(station.id);
+        if (!iframe) return;
+
+        const baseSrc = iframe.getAttribute('data-base-src') || station.url;
+        const sep = baseSrc.includes('?') ? '&' : '?';
+        iframe.src = `${baseSrc}${sep}_t=${timestamp}`;
+
+        const loadingNumber = station.id.replace('iframe', '');
+        const loadingEl = document.getElementById(`loading${loadingNumber}`);
+        if (loadingEl) loadingEl.style.display = 'flex';
+      });
+
+      // Clear global warning momentarily; it will return if still stale
+      document.getElementById('panelStalenessWarning').classList.remove('show');
+
+      showNotification(isAuto ? 'Auto-refresh started (wind panels)' : 'Wind panel refresh started', 'success');
+    }
+
+    function hideLoader(iframeId) {
+      const number = iframeId.replace('iframe', '');
+      const loader = document.getElementById(`loading${number}`);
+      if (loader) loader.style.display = 'none';
+    }
+
+    function recordPanelRefresh(iframeId) {
+      const now = new Date();
+      PANEL_STATE.lastRefreshed[iframeId] = now;
+      updatePanelIndicator(iframeId);
+      checkGlobalPanelStaleness();
+    }
+
+    function markPanelUnknown(iframeId) {
+      const number = iframeId.replace('iframe', '');
+      const txt = document.getElementById(`refreshText${number}`);
+      const dot = document.getElementById(`refreshDot${number}`);
+      const last = document.getElementById(`lastRefreshed${number}`);
+
+      if (txt) txt.textContent = 'Panel status unknown (open Full Data to verify)';
+      if (dot) dot.className = 'refresh-dot warning';
+      if (last) last.textContent = '';
+    }
+
+    function updateAllPanelIndicators() {
+      for (let i = 1; i <= 4; i++) updatePanelIndicator(`iframe${i}`);
+    }
+
+    function updatePanelIndicator(iframeId) {
+      const number = iframeId.replace('iframe', '');
+      const lastRefreshed = PANEL_STATE.lastRefreshed[iframeId];
+      if (!lastRefreshed) return;
+
+      const now = new Date();
+      const ageMin = Math.floor((now - lastRefreshed) / 60000);
+
+      const lastEl = document.getElementById(`lastRefreshed${number}`);
+      if (lastEl) lastEl.textContent = `Panel refreshed: ${lastRefreshed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+
+      const txt = document.getElementById(`refreshText${number}`);
+      const dot = document.getElementById(`refreshDot${number}`);
+      if (!txt || !dot) return;
+
+      if (ageMin < PANEL_FRESH_MIN) {
+        txt.textContent = `Panel fresh (${ageMin}m since refresh)`;
+        dot.className = 'refresh-dot';
+      } else if (ageMin < PANEL_STALE_MIN) {
+        txt.textContent = `Panel aging (${ageMin}m since refresh)`;
+        dot.className = 'refresh-dot warning';
+      } else {
+        txt.textContent = `Panel stale (${ageMin}m since refresh)`;
+        dot.className = 'refresh-dot stale';
+      }
+    }
+
+    function checkGlobalPanelStaleness() {
+      const now = new Date();
+      let anyStale = false;
+      let oldest = 0;
+      let anyUnknown = false;
+
+      for (let i = 1; i <= 4; i++) {
+        const id = `iframe${i}`;
+        const t = PANEL_STATE.lastRefreshed[id];
+        if (!t) {
+          anyUnknown = true;
+          anyStale = true;
+          continue;
+        }
+        const age = Math.floor((now - t) / 60000);
+        oldest = Math.max(oldest, age);
+        if (age >= PANEL_STALE_MIN) anyStale = true;
+      }
+
+      const warningEl = document.getElementById('panelStalenessWarning');
+      const warningTxt = document.getElementById('panelWarningText');
+
+      if (anyStale) {
+        warningEl.classList.add('show');
+        if (anyUnknown) {
+          warningTxt.textContent = 'Some panels have unknown refresh status — open Full Data or refresh panels.';
+        } else if (oldest >= PANEL_STALE_MIN) {
+          warningTxt.textContent = `WARNING: Wind panels up to ${oldest} minutes since refresh — refresh and verify timestamps.`;
+        } else {
+          warningTxt.textContent = 'Some panels may be aging — consider refreshing.';
+        }
+      } else {
+        warningEl.classList.remove('show');
+      }
+    }
+
+    function toggleFullscreen() {
+      const elem = document.documentElement;
+      const btn = document.getElementById('fullscreenBtn');
+
+      if (!document.fullscreenElement) {
+        elem.requestFullscreen?.();
+        if (btn) btn.innerHTML = '<i class="fas fa-compress"></i> Exit Fullscreen';
+        showNotification('Entered fullscreen mode', 'info');
+      } else {
+        document.exitFullscreen?.();
+        if (btn) btn.innerHTML = '<i class="fas fa-expand"></i> Fullscreen Mode';
+        showNotification('Exited fullscreen mode', 'info');
+      }
+    }
+
+    document.addEventListener('fullscreenchange', () => {
+      const btn = document.getElementById('fullscreenBtn');
+      if (!btn) return;
+      if (document.fullscreenElement) {
+        btn.innerHTML = '<i class="fas fa-compress"></i> Exit Fullscreen';
+      } else {
+        btn.innerHTML = '<i class="fas fa-expand"></i> Fullscreen Mode';
+      }
+    });
+
+    // Toast notifications
+    function showNotification(message, type = 'info') {
+      const colors = {
+        info: '#0055a5',
+        success: '#27ae60',
+        warning: '#f39c12',
+        error: '#e74c3c',
+      };
+
+      const icons = {
+        info: 'ℹ️',
+        success: '✅',
+        warning: '⚠️',
+        error: '❌',
+      };
+
+      document.querySelectorAll('.custom-notification').forEach((n) => n.remove());
+
+      const n = document.createElement('div');
+      n.className = 'custom-notification';
+      n.style.cssText = `
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        background: ${colors[type] || colors.info};
+        color: white;
+        padding: 16px 24px;
+        border-radius: 10px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        animation: slideInRight 0.3s ease;
+        font-weight: 600;
+        font-size: 0.95rem;
+        max-width: 420px;
+        border-left: 5px solid ${type === 'warning' ? '#ff8e53' : type === 'error' ? '#ff4757' : '#3498db'};
+      `;
+
+      n.innerHTML = `
+        <span style="font-size: 1.4rem;">${icons[type] || icons.info}</span>
+        <div style="flex: 1;">
+          <div style="font-weight: 800; margin-bottom: 3px; font-size: 1.05rem;">
+            ${type === 'warning' ? 'PANEL WARNING' : type === 'error' ? 'ALERT' : 'Stormaway Ops'}
+          </div>
+          <div>${message}</div>
+        </div>
+        <button aria-label="Close" onclick="this.parentElement.remove()" style="background:none;border:none;color:white;font-size:1.5rem;cursor:pointer;opacity:0.8;padding-left:10px;">×</button>
+      `;
+
+      document.body.appendChild(n);
+
+      const duration = type === 'warning' || type === 'error' ? 10000 : 5000;
+      setTimeout(() => {
+        if (!n.parentNode) return;
+        n.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => n.remove(), 300);
+      }, duration);
+
+      if (!document.querySelector('#notification-animations')) {
+        const style = document.createElement('style');
+        style.id = 'notification-animations';
+        style.textContent = `
+          @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+          @keyframes slideOutRight { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+          kbd { background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 6px; }
+        `;
+        document.head.appendChild(style);
+      }
+    }
+
+    function showKeyboardShortcuts() {
+      showNotification(`
+        <div style="line-height:1.6;">
+          <strong>Keyboard Shortcuts</strong><br>
+          • <kbd>Ctrl+1</kbd> – Refresh wind panels<br>
+          • <kbd>Ctrl+2</kbd> – Open ferry live status<br>
+          • <kbd>Ctrl+P</kbd> – Print dashboard<br>
+          • <kbd>Ctrl+Shift+H</kbd> – Show shortcuts
+        </div>
+      `, 'info');
+    }
+  </script>
 </body>
 </html>
