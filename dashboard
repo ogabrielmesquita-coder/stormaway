@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
+  <title>Stormaway Route 13 – Wind & Ferry Status Dashboard</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary-blue: #0055a5;
+      --secondary-blue: #1a73e8;
+      --accent-gold: #ffc72c;
+      --dark-blue: #003f7d;
+      --bg-light: #f5f9ff;
+      --card-radius: 16px;
+      --shadow-strong: 0 18px 45px rgba(15, 23, 42, 0.3);
+      --shadow-soft: 0 10px 30px rgba(15, 23, 42, 0.18);
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        Roboto, sans-serif;
+      background: radial-gradient(circle at top, #e3f0ff 0%, #f5f9ff 45%, #dbeafe 100%);
+      color: #0f172a;
+      min-height: 100vh;
+      padding: 12px;          /* compact for Toughbook */
+      font-size: 16px;        /* slightly larger base font */
+    }
+
+    .shell {
+      max-width: 1440px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 22px;
+      box-shadow: var(--shadow-strong);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+    }
+
+    /* HEADER */
+    .header {
+      padding: 22px 26px 18px;
+      background: linear-gradient(135deg, var(--primary-blue), var(--dark-blue));
+      color: #ffffff;
+      border-bottom: 3px solid var(--accent-gold);
+    }
+
+    .header-main {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .header-title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .title {
+      font-size: clamp(1.6rem, 2.7vw, 2.2rem);
+      font-weight: 750;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .subtitle {
+      font-size: 0.92rem;
+      opacity: 0.95;
+    }
+
+    .route {
+      text-align: right;
+      font-size: 0.82rem;
+      opacity: 0.9;
+    }
+
+    .route span {
+      display: block;
+    }
+
+    .header-badges {
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      background: rgba(255, 255, 255, 0.2);
+      font-size: 0.78rem;
+    }
+
+    .badge span {
+      font-size: 1rem;
+    }
+
+    /* TABS */
+    .tabs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px 2px;
+      border-bottom: 1px solid #e5e7eb;
+      background: #eef2ff;
+      flex-wrap: wrap;
+    }
+
+    .tab-buttons {
+      display: inline-flex;
+      border-radius: 999px;
+      padding: 3px;
+      background: #c7d2fe;
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.25) inset;
+    }
+
+    .tab-btn {
+      border: none;
+      background: transparent;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #111827;
+      opacity: 0.7;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.18s ease, opacity 0.18s ease,
+        transform 0.12s ease;
+    }
+
+    .tab-btn span {
+      font-size: 1rem;
+    }
+
+    .tab-btn.active {
+      background: #ffffff;
+      opacity: 1;
+      transform: translateY(-1px);
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
+    }
+
+    .tabs-note {
+      font-size: 0.78rem;
+      color: #4b5563;
+    }
+
+    /* PANELS */
+    .panels {
+      background: var(--bg-light);
+    }
+
+    .panel {
+      padding: 18px 20px 20px;
+      display: block; /* default if JS fails */
+    }
+
+    .panel.hidden {
+      display: none;
+    }
+
+    /* CREW VIEW (BIG NUMBERS) */
+    .crew-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .crew-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .crew-card {
+      background: #0b1120;
+      color: #e5e7eb;
+      border-radius: var(--card-radius);
+      box-shadow: var(--shadow-soft);
+      padding: 14px 16px 16px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .crew-label-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .crew-name {
+      font-size: 0.95rem;
+      font-weight: 650;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .crew-tag {
+      font-size: 0.75rem;
+      background: rgba(15, 23, 42, 0.8);
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .crew-tag span {
+      font-size: 0.95rem;
+    }
+
+    .crew-main-row {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .crew-wind {
+      font-size: clamp(2.4rem, 4vw, 3.2rem); /* bigger for Toughbook */
+      font-weight: 750;
+      letter-spacing: 0.04em;
+    }
+
+    .crew-unit {
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+      opacity: 0.85;
+    }
+
+    .crew-extra {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      font-size: 0.8rem;
+      opacity: 0.9;
+    }
+
+    .crew-extra strong {
+      font-weight: 650;
+      color: #f9fafb;
+    }
+
+    .crew-updated {
+      margin-top: 4px;
+      font-size: 0.73rem;
+      color: #9ca3af;
+    }
+
+    .crew-actions {
+      margin-top: 8px;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      font-size: 0.78rem;
+    }
+
+    .crew-open-link {
+      text-decoration: none;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.9);
+      color: #e5e7eb;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .crew-open-link span {
+      font-size: 0.95rem;
+    }
+
+    .crew-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: #22c55e;
+    }
+
+    .status-dot.loading {
+      background: #facc15;
+    }
+
+    .status-dot.error {
+      background: #ef4444;
+    }
+
+    .crew-status-text {
+      color: #9ca3af;
+    }
+
+    /* Ferry crew cards (no parsing, just links) */
+    .crew-card.ferry-card {
+      background: #020617;
+      border-color: rgba(59, 130, 246, 0.6);
+    }
+
+    .ferry-body-text {
+      margin-top: 6px;
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+
+    .ferry-eta-hint {
+      font-size: 0.78rem;
+      color: #cbd5f5;
+      margin-top: 4px;
+    }
+
+    /* TABLES VIEW (IFRAMES) */
+    .tables-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    @media (max-width: 900px) {
+      .tables-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .table-card {
+      background: #ffffff;
+      border-radius: var(--card-radius);
+      box-shadow: var(--shadow-soft);
+      border: 1px solid #e5e7eb;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .table-header {
+      padding: 10px 14px 8px;
+      background: linear-gradient(
+        to right,
+        rgba(0, 85, 165, 0.98),
+        rgba(26, 115, 232, 0.95)
+      );
+      color: #ffffff;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .table-header-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .table-name {
+      font-size: 1rem;
+      font-weight: 650;
+    }
+
+    .table-sub {
+      font-size: 0.78rem;
+      opacity: 0.92;
+    }
+
+    .table-chip {
+      font-size: 0.75rem;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      padding: 3px 8px;
+      background: rgba(15, 23, 42, 0.3);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .table-chip span {
+      font-size: 0.95rem;
+    }
+
+    .table-body {
+      padding: 6px 8px 0;
+      background: #f9fafb;
+    }
+
+    .table-help {
+      font-size: 0.75rem;
+      color: #4b5563;
+      margin-bottom: 4px;
+    }
+
+    .frame-wrap {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #e5e7eb;
+      background: #ffffff;
+    }
+
+    iframe {
+      width: 100%;
+      min-height: 280px;  /* shorter for Toughbook */
+      border: none;
+      display: block;
+    }
+
+    @media (max-width: 600px) {
+      iframe {
+        min-height: 240px;  /* shorter on small screens too */
+      }
+    }
+
+    .table-footer {
+      padding: 8px 10px 10px;
+      background: #f3f4f6;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      font-size: 0.75rem;
+    }
+
+    .table-note {
+      color: #6b7280;
+    }
+
+    .table-link {
+      text-decoration: none;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--accent-gold);
+      color: #1f2937;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: 1px solid #e5a400;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: auto;
+    }
+
+    .table-link span {
+      font-size: 0.95rem;
+    }
+
+    /* FOOTER */
+    .footer {
+      padding: 10px 18px 14px;
+      background: #020617;
+      color: #9ca3af;
+      font-size: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .footer strong {
+      color: #e5e7eb;
+    }
+
+    .footer a {
+      color: #e5e7eb;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <!-- HEADER -->
+    <header class="header">
+      <div class="header-main">
+        <div class="header-title-block">
+          <div class="title">Stormaway – Wind & Ferry Status</div>
+          <div class="subtitle">
+            Live Environment Canada wind + BC Ferries current conditions for Route 13
+          </div>
+        </div>
+        <div class="route">
+          <span>BC Ferries Route 13</span>
+          <span>Langdale ⇄ Keats Island ⇄ Gambier Island</span>
+        </div>
+      </div>
+
+      <div class="header-badges">
+        <div class="badge">
+          <span>🌊</span> Howe Sound & Strait of Georgia wind
+        </div>
+        <div class="badge">
+          <span>⛴️</span> HSB ⇄ Langdale mainline ferry status
+        </div>
+        <div class="badge">
+          <span>📡</span> Live data from ECCC & BC Ferries
+        </div>
+      </div>
+    </header>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <div class="tab-buttons">
+        <button class="tab-btn active" id="crewTabBtn" type="button">
+          <span>👀</span> Crew View (Big Numbers)
+        </button>
+        <button class="tab-btn" id="tablesTabBtn" type="button">
+          <span>📋</span> Full Tables & Pages
+        </button>
+      </div>
+      <div class="tabs-note">
+        Crew View auto-parses wind from ECCC. Ferry ETAs open in BC Ferries pages.
+        If anything fails, use the Full Tables tab.
+      </div>
+    </div>
+
+    <div class="panels">
+      <!-- CREW VIEW PANEL -->
+      <section class="panel" id="crewPanel">
+        <div class="crew-grid">
+          <!-- Pam Rocks -->
+          <article class="crew-card" id="card-pam">
+            <div class="crew-label-row">
+              <div class="crew-name">Pam Rocks</div>
+              <div class="crew-tag">
+                <span>🏔️</span> Howe Sound – main reference
+              </div>
+            </div>
+            <div class="crew-main-row">
+              <div>
+                <div class="crew-wind" id="pam-wind">--</div>
+                <div class="crew-unit">kt</div>
+              </div>
+              <div class="crew-extra">
+                <div><strong>Dir:</strong> <span id="pam-dir">--</span></div>
+                <div><strong>Gusts:</strong> <span id="pam-gust">--</span></div>
+              </div>
+            </div>
+            <div class="crew-updated" id="pam-updated">
+              Waiting for latest Environment Canada data…
+            </div>
+            <div class="crew-actions">
+              <div class="crew-status">
+                <div class="status-dot loading" id="pam-status-dot"></div>
+                <span class="crew-status-text" id="pam-status-text">Loading…</span>
+              </div>
+              <a
+                class="crew-open-link"
+                href="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=06400&stationID=WAS"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span>🔗</span> Open ECCC page
+              </a>
+            </div>
+          </article>
+
+          <!-- Point Atkinson -->
+          <article class="crew-card" id="card-point">
+            <div class="crew-label-row">
+              <div class="crew-name">Point Atkinson</div>
+              <div class="crew-tag">
+                <span>🗼</span> Entrance to Howe Sound
+              </div>
+            </div>
+            <div class="crew-main-row">
+              <div>
+                <div class="crew-wind" id="point-wind">--</div>
+                <div class="crew-unit">kt</div>
+              </div>
+              <div class="crew-extra">
+                <div><strong>Dir:</strong> <span id="point-dir">--</span></div>
+                <div><strong>Gusts:</strong> <span id="point-gust">--</span></div>
+              </div>
+            </div>
+            <div class="crew-updated" id="point-updated">
+              Waiting for latest Environment Canada data…
+            </div>
+            <div class="crew-actions">
+              <div class="crew-status">
+                <div class="status-dot loading" id="point-status-dot"></div>
+                <span class="crew-status-text" id="point-status-text">Loading…</span>
+              </div>
+              <a
+                class="crew-open-link"
+                href="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=04800&stationID=WSB"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span>🔗</span> Open ECCC page
+              </a>
+            </div>
+          </article>
+
+          <!-- English Bay 46304 -->
+          <article class="crew-card" id="card-english">
+            <div class="crew-label-row">
+              <div class="crew-name">English Bay – 46304</div>
+              <div class="crew-tag">
+                <span>🌊</span> Entrance buoy / sea-state
+              </div>
+            </div>
+            <div class="crew-main-row">
+              <div>
+                <div class="crew-wind" id="english-wind">--</div>
+                <div class="crew-unit">kt</div>
+              </div>
+              <div class="crew-extra">
+                <div><strong>Dir:</strong> <span id="english-dir">--</span></div>
+                <div><strong>Gusts:</strong> <span id="english-gust">--</span></div>
+              </div>
+            </div>
+            <div class="crew-updated" id="english-updated">
+              Waiting for latest Environment Canada data…
+            </div>
+            <div class="crew-actions">
+              <div class="crew-status">
+                <div class="status-dot loading" id="english-status-dot"></div>
+                <span class="crew-status-text" id="english-status-text">Loading…</span>
+              </div>
+              <a
+                class="crew-open-link"
+                href="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46304"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span>🔗</span> Open ECCC page
+              </a>
+            </div>
+          </article>
+
+          <!-- Halibut Bank 46146 -->
+          <article class="crew-card" id="card-halibut">
+            <div class="crew-label-row">
+              <div class="crew-name">Halibut Bank – 46146</div>
+              <div class="crew-tag">
+                <span>⚓</span> Outer Strait system check
+              </div>
+            </div>
+            <div class="crew-main-row">
+              <div>
+                <div class="crew-wind" id="halibut-wind">--</div>
+                <div class="crew-unit">kt</div>
+              </div>
+              <div class="crew-extra">
+                <div><strong>Dir:</strong> <span id="halibut-dir">--</span></div>
+                <div><strong>Gusts:</strong> <span id="halibut-gust">--</span></div>
+              </div>
+            </div>
+            <div class="crew-updated" id="halibut-updated">
+              Waiting for latest Environment Canada data…
+            </div>
+            <div class="crew-actions">
+              <div class="crew-status">
+                <div class="status-dot loading" id="halibut-status-dot"></div>
+                <span class="crew-status-text" id="halibut-status-text">
+                  Loading…
+                </span>
+              </div>
+              <a
+                class="crew-open-link"
+                href="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46146"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span>🔗</span> Open ECCC page
+              </a>
+            </div>
+          </article>
+
+          <!-- Ferry HSB → Langdale -->
+          <article class="crew-card ferry-card" id="card-ferry-hsb-lng">
+            <div class="crew-label-row">
+              <div class="crew-name">HSB → Langdale (Mainline Ferry)</div>
+              <div class="crew-tag">
+                <span>⛴️</span> Arrivals into Langdale
+              </div>
+            </div>
+            <div class="ferry-body-text">
+              Live BC Ferries current-conditions page for
+              <strong>Horseshoe Bay → Langdale</strong>.
+              Use this to estimate when passengers will arrive for Stormaway.
+            </div>
+            <div class="ferry-eta-hint">
+              • Shows next scheduled departure, actual departure, ETA and any delays
+              for the HSB → LNG sailings.
+            </div>
+            <div class="crew-actions" style="margin-top: 10px;">
+              <div class="crew-status">
+                <div class="status-dot"></div>
+                <span class="crew-status-text">
+                  Open BC Ferries page for full timing details.
+                </span>
+              </div>
+              <a
+                class="crew-open-link"
+                href="https://www.bcferries.com/current-conditions/HSB-LNG"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span>🔗</span> Open HSB → Langdale status
+              </a>
+            </div>
+          </article>
+
+          <!-- Ferry Langdale → HSB -->
+          <article class="crew-card ferry-card" id="card-ferry-lng-hsb">
+            <div class="crew-label-row">
+              <div class="crew-name">Langdale → HSB (Mainline Ferry)</div>
+              <div class="crew-tag">
+                <span>⛴️</span> Departures from Langdale
+              </div>
+            </div>
+            <div class="ferry-body-text">
+              Live BC Ferries current-conditions page for
+              <strong>Langdale → Horseshoe Bay</strong>.
+              Useful for seeing outbound connections and overall schedule pressure.
+            </div>
+            <div class="ferry-eta-hint">
+              • Check actual departure times, ETAs and delays that might affect
+              passenger flow through Langdale.
+            </div>
+            <div class="crew-actions" style="margin-top: 10px;">
+              <div class="crew-status">
+                <div class="status-dot"></div>
+                <span class="crew-status-text">
+                  Open BC Ferries page for live sailing details.
+                </span>
+              </div>
+              <a
+                class="crew-open-link"
+                href="https://www.bcferries.com/current-conditions/LNG-HSB"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span>🔗</span> Open Langdale → HSB status
+              </a>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- TABLES / PAGES VIEW PANEL -->
+      <section class="panel hidden" id="tablesPanel">
+        <div class="tables-grid">
+          <!-- Pam Rocks iframe -->
+          <section class="table-card">
+            <div class="table-header">
+              <div class="table-header-text">
+                <div class="table-name">Pam Rocks</div>
+                <div class="table-sub">Howe Sound – Current Conditions</div>
+              </div>
+              <div class="table-chip">
+                <span>🏔️</span> Howe Sound – Pam Rocks
+              </div>
+            </div>
+            <div class="table-body">
+              <div class="table-help">
+                Full ECCC current-conditions table for Howe Sound – Pam Rocks.
+              </div>
+              <div class="frame-wrap">
+                <iframe
+                  src="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=06400&stationID=WAS"
+                  title="Howe Sound - Pam Rocks current conditions"
+                ></iframe>
+              </div>
+            </div>
+            <div class="table-footer">
+              <div class="table-note">
+                If the table does not show inside the box, use the button to open it
+                in a new tab/window.
+              </div>
+              <a
+                class="table-link"
+                href="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=06400&stationID=WAS"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span>🔗</span> Open Pam Rocks
+              </a>
+            </div>
+          </section>
+
+          <!-- Point Atkinson iframe -->
+          <section class="table-card">
+            <div class="table-header">
+              <div class="table-header-text">
+                <div class="table-name">Point Atkinson</div>
+                <div class="table-sub">Pacific – South Coast – Current Conditions</div>
+              </div>
+              <div class="table-chip">
+                <span>🗼</span> Point Atkinson
+              </div>
+            </div>
+            <div class="table-body">
+              <div class="table-help">
+                ECCC lightstation observations – wind at the entrance to Howe Sound.
+              </div>
+              <div class="frame-wrap">
+                <iframe
+                  src="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=04800&stationID=WSB"
+                  title="Point Atkinson current conditions"
+                ></iframe>
+              </div>
+            </div>
+            <div class="table-footer">
+              <div class="table-note">
+                Use this with Pam Rocks to see how wind is funnelling into the Sound.
+              </div>
+              <a
+                class="table-link"
+                href="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=04800&stationID=WSB"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span>🔗</span> Open Point Atkinson
+              </a>
+            </div>
+          </section>
+
+          <!-- English Bay 46304 iframe -->
+          <section class="table-card">
+            <div class="table-header">
+              <div class="table-header-text">
+                <div class="table-name">English Bay – 46304</div>
+                <div class="table-sub">
+                  Strait of Georgia – south of Nanaimo – Current Conditions
+                </div>
+              </div>
+              <div class="table-chip">
+                <span>🌊</span> Entrance buoy 46304
+              </div>
+            </div>
+            <div class="table-body">
+              <div class="table-help">
+                Offshore buoy at English Bay entrance – wind, waves and sea-state.
+              </div>
+              <div class="frame-wrap">
+                <iframe
+                  src="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46304"
+                  title="English Bay 46304 current conditions"
+                ></iframe>
+              </div>
+            </div>
+            <div class="table-footer">
+              <div class="table-note">
+                Compare with Halibut Bank to see systems building down the Strait.
+              </div>
+              <a
+                class="table-link"
+                href="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46304"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span>🔗</span> Open English Bay 46304
+              </a>
+            </div>
+          </section>
+
+          <!-- Halibut Bank 46146 iframe -->
+          <section class="table-card">
+            <div class="table-header">
+              <div class="table-header-text">
+                <div class="table-name">Halibut Bank – 46146</div>
+                <div class="table-sub">
+                  Strait of Georgia – south of Nanaimo – Current Conditions
+                </div>
+              </div>
+              <div class="table-chip">
+                <span>⚓</span> Mid-Strait buoy 46146
+              </div>
+            </div>
+            <div class="table-body">
+              <div class="table-help">
+                Mid-Strait buoy – good indicator of larger systems and swell further out.
+              </div>
+              <div class="frame-wrap">
+                <iframe
+                  src="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46146"
+                  title="Halibut Bank 46146 current conditions"
+                ></iframe>
+              </div>
+            </div>
+            <div class="table-footer">
+              <div class="table-note">
+                Use with English Bay and Howe Sound for the full Route 13 picture.
+              </div>
+              <a
+                class="table-link"
+                href="https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46146"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span>🔗</span> Open Halibut Bank 46146
+              </a>
+            </div>
+          </section>
+
+          <!-- Ferry HSB → Langdale iframe -->
+          <section class="table-card">
+            <div class="table-header">
+              <div class="table-header-text">
+                <div class="table-name">HSB → Langdale Ferry</div>
+                <div class="table-sub">BC Ferries – Current Conditions page</div>
+              </div>
+              <div class="table-chip">
+                <span>⛴️</span> Horseshoe Bay → Langdale
+              </div>
+            </div>
+            <div class="table-body">
+              <div class="table-help">
+                Live BC Ferries status: departures, actual times, ETAs and delays
+                for Horseshoe Bay → Langdale.
+              </div>
+              <div class="frame-wrap">
+                <iframe
+                  src="https://www.bcferries.com/current-conditions/HSB-LNG"
+                  title="BC Ferries current conditions – HSB to Langdale"
+                ></iframe>
+              </div>
+            </div>
+            <div class="table-footer">
+              <div class="table-note">
+                If the page does not render here, use the button to open it directly.
+              </div>
+              <a
+                class="table-link"
+                href="https://www.bcferries.com/current-conditions/HSB-LNG"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span>🔗</span> Open HSB → Langdale
+              </a>
+            </div>
+          </section>
+
+          <!-- Ferry Langdale → HSB iframe -->
+          <section class="table-card">
+            <div class="table-header">
+              <div class="table-header-text">
+                <div class="table-name">Langdale → HSB Ferry</div>
+                <div class="table-sub">BC Ferries – Current Conditions page</div>
+              </div>
+              <div class="table-chip">
+                <span>⛴️</span> Langdale → Horseshoe Bay
+              </div>
+            </div>
+            <div class="table-body">
+              <div class="table-help">
+                Live BC Ferries status: departures, actual times, ETAs and delays
+                for Langdale → Horseshoe Bay.
+              </div>
+              <div class="frame-wrap">
+                <iframe
+                  src="https://www.bcferries.com/current-conditions/LNG-HSB"
+                  title="BC Ferries current conditions – Langdale to HSB"
+                ></iframe>
+              </div>
+            </div>
+            <div class="table-footer">
+              <div class="table-note">
+                Use together with HSB → Langdale to see how mainline traffic is flowing.
+              </div>
+              <a
+                class="table-link"
+                href="https://www.bcferries.com/current-conditions/LNG-HSB"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span>🔗</span> Open Langdale → HSB
+              </a>
+            </div>
+          </section>
+        </div>
+      </section>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div>
+        <strong>Sources:</strong>
+        Environment and Climate Change Canada – Marine “Current Conditions” for
+        Pam Rocks, Point Atkinson, English Bay (46304) and Halibut Bank (46146);
+        BC Ferries current-conditions pages for HSB ⇄ Langdale.
+      </div>
+      <div>
+        <strong>Safety:</strong>
+        For navigation decisions, always follow official marine forecasts,
+        BC Ferries operational updates and the master’s judgement. This dashboard
+        is for quick situational awareness only.
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // ---- Tab switching ----
+    (function () {
+      const crewBtn = document.getElementById("crewTabBtn");
+      const tablesBtn = document.getElementById("tablesTabBtn");
+      const crewPanel = document.getElementById("crewPanel");
+      const tablesPanel = document.getElementById("tablesPanel");
+
+      function showCrew() {
+        crewBtn.classList.add("active");
+        tablesBtn.classList.remove("active");
+        crewPanel.classList.remove("hidden");
+        tablesPanel.classList.add("hidden");
+      }
+
+      function showTables() {
+        tablesBtn.classList.add("active");
+        crewBtn.classList.remove("active");
+        tablesPanel.classList.remove("hidden");
+        crewPanel.classList.add("hidden");
+      }
+
+      crewBtn.addEventListener("click", showCrew);
+      tablesBtn.addEventListener("click", showTables);
+    })();
+
+    // ---- Live data fetching for Crew View (ECCC only) ----
+    (function () {
+      const STATIONS = [
+        {
+          key: "pam",
+          name: "Pam Rocks",
+          url:
+            "https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=06400&stationID=WAS",
+        },
+        {
+          key: "point",
+          name: "Point Atkinson",
+          url:
+            "https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=04800&stationID=WSB",
+        },
+        {
+          key: "english",
+          name: "English Bay – 46304",
+          url:
+            "https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46304",
+        },
+        {
+          key: "halibut",
+          name: "Halibut Bank – 46146",
+          url:
+            "https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46146",
+        },
+      ];
+
+      function setStatus(key, status, message) {
+        const dot = document.getElementById(key + "-status-dot");
+        const text = document.getElementById(key + "-status-text");
+
+        if (!dot || !text) return;
+
+        dot.classList.remove("loading", "error");
+        if (status === "ok") {
+          dot.className = "status-dot";
+          text.textContent = message || "Live ECCC data";
+        } else if (status === "loading") {
+          dot.className = "status-dot loading";
+          text.textContent = message || "Loading…";
+        } else if (status === "error") {
+          dot.className = "status-dot error";
+          text.textContent =
+            message || "Data not available – use ECCC link / Full Tables tab";
+        }
+      }
+
+      function updateValues(key, dir, speed, gusts, timeString) {
+        const windEl = document.getElementById(key + "-wind");
+        const dirEl = document.getElementById(key + "-dir");
+        const gustEl = document.getElementById(key + "-gust");
+        const updEl = document.getElementById(key + "-updated");
+
+        if (windEl) windEl.textContent = speed || "--";
+        if (dirEl) dirEl.textContent = dir || "--";
+        if (gustEl) gustEl.textContent = gusts || "--";
+        if (updEl && timeString) {
+          updEl.textContent = "Obs time: " + timeString;
+        }
+      }
+
+      // Parse wind line from inner text of the ECCC HTML
+      function parseWind(text) {
+        const windBlockMatch = text.match(
+          /Wind\s*\([^)]*\)\s*(.+?)(?:Air temperature|Wave height|Pressure and tendency|Visibility)/s
+        );
+        let windChunk = windBlockMatch ? windBlockMatch[1] : null;
+        if (windChunk) {
+          windChunk = windChunk.replace(/\s+/g, " ").trim();
+        }
+
+        let dir = null;
+        let speed = null;
+        let gusts = null;
+
+        if (windChunk) {
+          const m = windChunk.match(
+            /^([A-Z]{1,3})\s+(\d+)(?:\s+gusts\s+(\d+))?/i
+          );
+          if (m) {
+            dir = m[1].toUpperCase();
+            speed = m[2];
+            gusts = m[3] || "—";
+          } else {
+            dir = windChunk;
+            speed = "--";
+            gusts = "—";
+          }
+        }
+
+        const timeMatch = text.match(
+          /(\d{1,2}:\d{2}\s*(?:AM|PM)\s+[A-Z]{2,4}\s+\d{1,2}\s+\w+\s+\d{4})/
+        );
+        const timeString = timeMatch ? timeMatch[1] : null;
+
+        return { dir, speed, gusts, timeString };
+      }
+
+      async function fetchStation(station) {
+        setStatus(station.key, "loading");
+
+        try {
+          const response = await fetch(station.url, { method: "GET" });
+          if (!response.ok) {
+            throw new Error("HTTP " + response.status);
+          }
+          const html = await response.text();
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, "text/html");
+          const text = doc.body
+            ? (doc.body.innerText || doc.body.textContent || "")
+            : html;
+
+          const { dir, speed, gusts, timeString } = parseWind(text);
+
+          if (!dir && !speed) {
+            throw new Error("Wind line not found");
+          }
+
+          updateValues(station.key, dir, speed, gusts, timeString);
+          setStatus(station.key, "ok");
+        } catch (err) {
+          console.error("Error loading station", station.name, err);
+          setStatus(
+            station.key,
+            "error",
+            "Cannot read data (likely browser security). Use ECCC page / Full Tables tab."
+          );
+          updateValues(station.key, null, "--", "—", null);
+        }
+      }
+
+      async function refreshAll() {
+        for (const s of STATIONS) {
+          fetchStation(s);
+        }
+      }
+
+      // First run + periodic refresh
+      refreshAll();
+      setInterval(refreshAll, 30 * 60 * 1000); // every 30 minutes
+    })();
+  </script>
+</body>
+</html>
